@@ -8,36 +8,52 @@ __global__ void kernel(float *a, size_t n)
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
     {
-        a[i] = 2 * a[i];
+        a[i] = a[i] + 1;
     }
 }
 
-bool cuda_computation(float *a, size_t n)
+constexpr auto threads = 8;
+
+void *get_device_buffer(size_t s)
 {
-    float *d_a;
+    void *device;
+    auto rc = cudaMalloc(&device, s);
+    if (rc == cudaSuccess)
+    {
+        return device;
+    }
+    return nullptr;
+}
+
+void free_device_buffer(void *device)
+{
+    cudaFree(device);
+}
+
+bool cuda_computation1(float *host, size_t n)
+{
     auto s = n * sizeof(float);
+    float *device = (float *)get_device_buffer(s);
 
-    auto rc = cudaMalloc(&d_a, s);
-    if (rc != cudaSuccess)
+    if (!device)
     {
         return false;
     }
 
-    rc = cudaMemcpy(d_a, a, s, cudaMemcpyHostToDevice);
+    auto rc = cudaMemcpy(device, host, s, cudaMemcpyHostToDevice);
     if (rc != cudaSuccess)
     {
-        cudaFree(d_a);
+        free_device_buffer(device);
         return false;
     }
 
-    size_t constexpr BLOCKS = 8;
-    const auto threads = (n + 1) / BLOCKS;
+    const size_t blocks = (n + threads - 1) / threads;
 
-    kernel<<<BLOCKS, threads>>>(d_a, n);
+    kernel<<<blocks, threads>>>(device, n);
     bool ret = cudaDeviceSynchronize() == cudaSuccess;
-    ret &= cudaMemcpy(a, d_a, s, cudaMemcpyDeviceToHost) == cudaSuccess;
+    ret &= cudaMemcpy(host, device, s, cudaMemcpyDeviceToHost) == cudaSuccess;
 
-    cudaFree(d_a);
+    free_device_buffer(device);
 
     return ret;
 }

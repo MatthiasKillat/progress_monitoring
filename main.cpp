@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 
   // could always start monitoring thread if not yet started (requires check
   // though ...)
-  START_MONITORING
+  START_MONITORING;
   EXPECT_PROGRESS_IN(EXPECTED_ADD_TIME);
   // this could also be some async GPU computation
   task(2, 3);

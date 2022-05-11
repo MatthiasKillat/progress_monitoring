@@ -17,7 +17,7 @@ target_link_libraries(monitoring PRIVATE Threads::Threads)
 enable_language(CUDA)
 
 add_executable(cuda_monitoring
-  cuda_main.cpp cuda_computation.cu
+  cuda_main.cpp cuda_computation.cu src/monitoring.cpp
 )
 
 set_property(TARGET cuda_monitoring PROPERTY CUDA_SEPARABLE_COMPILATION ON)
