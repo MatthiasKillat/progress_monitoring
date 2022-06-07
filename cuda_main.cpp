@@ -7,7 +7,6 @@
 // #define MONITORING_PASSIVE
 
 #include "macro_interface.hpp"
-using namespace monitor;
 
 using namespace std::chrono_literals;
 
@@ -30,7 +29,7 @@ void print() {
 }
 
 bool dummy_computation(float *host, size_t n) {
-  // std::this_thread::sleep_for(1ms);
+  std::this_thread::sleep_for(2ms);
   host[0] += 1;
   host[N / 2] += 1;
   host[N - 1] += 1;
@@ -49,7 +48,7 @@ int main(void) {
   START_MONITORING;           // call per monitored thread
 
   for (int i = 0; i < ITERATIONS; ++i) {
-    EXPECT_PROGRESS_IN(TIME_BUDGET); // call per monitored section
+    EXPECT_PROGRESS_IN(1ms); // call per monitored section
 
     // first run takes longer, likely due to some GPU init
     auto success = cuda_computation1(buffer, N);

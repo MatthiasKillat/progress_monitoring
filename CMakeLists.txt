@@ -8,11 +8,17 @@ find_package(Threads REQUIRED)
 
 include_directories(include)
 
-add_executable(monitoring
-  main.cpp src/monitoring.cpp
+add_executable(single_monitoring
+  single_thread_main.cpp src/monitoring.cpp
 )
 
-target_link_libraries(monitoring PRIVATE Threads::Threads)
+target_link_libraries(single_monitoring PRIVATE Threads::Threads)
+
+add_executable(multi_monitoring
+  multi_thread_main.cpp src/monitoring.cpp
+)
+
+target_link_libraries(multi_monitoring PRIVATE Threads::Threads)
 
 enable_language(CUDA)
 
