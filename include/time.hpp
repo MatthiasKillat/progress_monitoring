@@ -20,7 +20,7 @@ inline bool isExceeded(uint64_t deadline, uint64_t now, uint64_t &delta) {
   // cast on unsigned int is not portable for large values (highest bit set)
   // use bitmask instead
   auto d = static_cast<int64_t>(delta);
-  return d > 0; // or >=, depends on intention
+  return d > 0;
 }
 
 } // namespace monitor

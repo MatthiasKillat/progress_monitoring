@@ -79,7 +79,7 @@ void ThreadMonitor::stop() {
 }
 
 void ThreadMonitor::prioritize(std::thread &thread) {
-  // TODO: only on linux
+  // NB: works only on linux for now
   auto h = thread.native_handle();
   constexpr int policy = SCHED_FIFO;
   sched_param params;
@@ -106,7 +106,7 @@ void ThreadMonitor::checkDeadlines(
       auto deadline =
           state.deadline.load(std::memory_order_relaxed); // sufficient?
 
-      // TODO: this state may become unused in the meantime
+      // NB: this state may become unused in the meantime
       if (deadline > 0 && isExceeded(deadline, now, delta)) {
 
         if (state.deadline.compare_exchange_strong(deadline, 0,
@@ -120,9 +120,9 @@ void ThreadMonitor::checkDeadlines(
           SourceLocation location;
 
           auto validLocation = state.tryGetLocation(location);
-          // self detect lateness (but of course no
-          // deadlock) useful if we are only a little late
-          std::cout << "[Monitoring] id " << state.id
+          // current thread detects lateness (but of course no deadlock)
+          // useful if we are only a little late
+          std::cout << "[Monitoring] thread id " << state.id
                     << ": deadline exceeded by " << delta << " time units";
           if (validLocation) {
             std::cout << " at CONFIRM PROGRESS in " << state.location
@@ -138,14 +138,11 @@ void ThreadMonitor::checkDeadlines(
   }
 }
 
-// todo: optimize monitoring (no polling if nobody monitors, flexible
-// interval)
 void ThreadMonitor::monitor() {
   uint64_t tick{1};
   while (m_isMonitoring) {
     auto now = clock_t::now();
     auto wakeup = now + m_interval;
-    // std::cout << "Monitor tick " << tick++ << std::endl;
     checkDeadlines(now);
     std::this_thread::sleep_until(wakeup);
   }
@@ -193,7 +190,7 @@ void awaitProgressIn(time_unit_t timeout, const SourceLocation &location) {
   assert(tl_state->deadline.load(std::memory_order_relaxed) ==
          0); // misuse otherwise
 
-  tl_state->location = location; // todo: race
+  tl_state->location = location; // TODO: likely race, implications?
 
   auto now = clock_t::now();
   auto deadline = now + timeout;
@@ -216,9 +213,9 @@ void confirmProgress(const SourceLocation &location) {
 
   uint64_t delta;
   if (isExceeded(deadline, now, delta)) {
-    // self detect lateness (but of course no deadlock)
+    // current thread detect lateness (but of course no deadlock)
     // useful if we are only a little late
-    std::cout << "[This Thread] id " << tl_state->id
+    std::cout << "[This Thread] thread id " << tl_state->id
               << ": deadline exceeded by " << delta
               << " time units at CONFIRM PROGRESS in " << location << std::endl;
     tl_state->executeHandler();

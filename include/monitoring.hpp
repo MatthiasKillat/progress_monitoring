@@ -27,8 +27,8 @@ struct ThreadState {
   // not strictly needed if we want to keep it light
   std::atomic<uint64_t> count{0};
 
-  // TODO: error codes instead
-  SourceLocation location; // TODO: tracing is costly, enable/disable
+  // TODO: add error codes instead
+  SourceLocation location;
 
   // reset by monitor but count is still odd (only the thread itself will set it
   // to an even number)
@@ -56,7 +56,7 @@ struct ThreadState {
   void reset();
 
 private:
-  // TODO: generalize signature
+  // TODO: generalize handler signature
   std::function<void(void)> handler;
   std::mutex handlerMutex;
 };
@@ -70,7 +70,6 @@ public:
   // must work concurrently, mutex is ok if needed (is used rarely)
   ThreadState *loanState();
 
-  // TODO implement
   void returnState(ThreadState &state);
 
   void start(time_unit_t interval = time_unit_t{10});

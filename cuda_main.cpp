@@ -6,7 +6,7 @@
 #define MONITORING_ACTIVE
 // #define MONITORING_PASSIVE
 
-#include "macro_interface.hpp"
+#include "monitoring_interface.hpp"
 
 using namespace std::chrono_literals;
 

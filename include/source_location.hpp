@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+// lightweight, will contain only pointers to strings in the data segment
 struct SourceLocation {
   const char *file;
   unsigned line;
