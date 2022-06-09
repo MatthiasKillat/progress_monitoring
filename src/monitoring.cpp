@@ -122,8 +122,9 @@ void ThreadMonitor::checkDeadlines(
           auto validLocation = state.tryGetLocation(location);
           // current thread detects lateness (but of course no deadlock)
           // useful if we are only a little late
-          std::cout << "[Monitoring] thread id " << state.id
-                    << ": deadline exceeded by " << delta << " time units";
+          std::cout << "[Monitoring Thread detected] thread id " << state.id
+                    << ": deadline will be exceeded by at least " << delta
+                    << " time units";
           if (validLocation) {
             std::cout << " at CONFIRM PROGRESS in " << state.location
                       << std::endl;
@@ -215,7 +216,7 @@ void confirmProgress(const SourceLocation &location) {
   if (isExceeded(deadline, now, delta)) {
     // current thread detect lateness (but of course no deadlock)
     // useful if we are only a little late
-    std::cout << "[This Thread] thread id " << tl_state->id
+    std::cout << "[This Thread detected] thread id " << tl_state->id
               << ": deadline exceeded by " << delta
               << " time units at CONFIRM PROGRESS in " << location << std::endl;
     tl_state->executeHandler();

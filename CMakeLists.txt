@@ -20,6 +20,12 @@ add_executable(multi_monitoring
 
 target_link_libraries(multi_monitoring PRIVATE Threads::Threads)
 
+add_executable(async_monitoring
+  async_main.cpp src/monitoring.cpp
+)
+
+target_link_libraries(async_monitoring PRIVATE Threads::Threads)
+
 enable_language(CUDA)
 
 add_executable(cuda_monitoring
