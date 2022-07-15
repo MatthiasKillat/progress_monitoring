@@ -20,7 +20,7 @@ using thread_id_t = std::thread::id;
 struct ThreadState {
   // this atomic is crucial and the only frequent sync point between the thread
   // and the monitor (minimal interference)
-  std::atomic<time_t> deadline{0};
+  std::atomic<time_t> deadline{0}; // TODO: single writer lock-free stack
   thread_id_t id{0};
   size_t index;
 

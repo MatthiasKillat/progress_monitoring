@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 // OFF     : disables monitoring (no overhead in application code)
 //
@@ -24,7 +25,7 @@ constexpr auto TIME_BUDGET = 100ms;
 // some of them will provoke a deadline violation
 // constexpr auto ARTIFICIAL_DELAY = TIME_BUDGET - 1ms;
 // constexpr auto ARTIFICIAL_DELAY = TIME_BUDGET;
-constexpr auto ARTIFICIAL_DELAY = TIME_BUDGET + 1ms;
+constexpr auto ARTIFICIAL_DELAY = TIME_BUDGET + 15ms;
 // constexpr auto ARTIFICIAL_DELAY = TIME_BUDGET + 50ms;
 
 int add(int a, int b) {
