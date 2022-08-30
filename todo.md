@@ -8,3 +8,7 @@
 6. verify that there are no race conditions that impact functionality
 7. cleanup code
 8. testing
+9. tracepoint labels
+10. priority and affinity of the monitoring thread
+
+## Alternatives

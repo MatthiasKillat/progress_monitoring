@@ -4,6 +4,8 @@ project(thread-monitoring LANGUAGES CXX CUDA)
 set(CMAKE_CXX_STANDARD 17) 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+enable_language(CUDA)
+
 find_package(Threads REQUIRED)
 
 include_directories(include)
@@ -26,12 +28,14 @@ add_executable(async_monitoring
 
 target_link_libraries(async_monitoring PRIVATE Threads::Threads)
 
-enable_language(CUDA)
-
 add_executable(cuda_monitoring
   cuda_main.cpp cuda_computation.cu src/monitoring.cpp
 )
 
 set_property(TARGET cuda_monitoring PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+add_executable(stack
+  stack_main.cpp
+)
 
 
