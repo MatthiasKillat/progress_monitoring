@@ -155,21 +155,11 @@ private:
 };
 
 template <uint32_t N, uint32_t C = 1> class Cache {
-  static constexpr uint32_t NONE = 0; // TODO: need a useful null value
+  // by the time we wrap around t actually add 0 as a value the cache contains
+  // other entries
+  static constexpr uint32_t INITIAL_ENTRY = 0;
 
 public:
-  Cache() {
-    for (auto &line : data) {
-      for (auto &value : line) {
-        value = NONE;
-      }
-    }
-
-    for (auto &value : next) {
-      value = 0;
-    }
-  }
-
   // no duplicate checks for efficiency
 
   void add(uint64_t value) {
@@ -193,6 +183,7 @@ public:
   }
 
 private:
-  std::array<std::array<uint64_t, C>, N> data;
+  std::array<std::array<uint64_t, C>, N> data{
+      std::array<uint64_t, C>{INITIAL_ENTRY}};
   std::array<uint32_t, N> next{0};
 };

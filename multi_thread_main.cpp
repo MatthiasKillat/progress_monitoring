@@ -33,7 +33,7 @@ void someAlgorithm(int id, std::chrono::milliseconds budget,
   static std::atomic<int> s_id{1};
   auto handler = [=]() { cout << "Thread " << id << " PANIC !!!" << endl; };
 
-  START_MONITORING
+  START_MONITORING;
 
   EXPECT_PROGRESS_IN(LOCK_BUDGET);
   lock(); // lock mock

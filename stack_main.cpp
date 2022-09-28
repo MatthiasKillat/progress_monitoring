@@ -1,7 +1,9 @@
 #include <iostream>
 
+#include "include/singleton.hpp"
 #include "include/stack.hpp"
-#include "stack.hpp"
+
+#include "include/cache.hpp"
 
 thread_local Stack stack;
 
@@ -38,6 +40,10 @@ int main(void) {
   if (cache.find(70)) {
     std::cout << "70 in cache\n";
   }
+
+
+
+ 
 
   return EXIT_SUCCESS;
 }
