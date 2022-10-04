@@ -38,4 +38,8 @@ add_executable(stack
   stack_main.cpp
 )
 
+add_executable(weak_cache
+  cache_main.cpp
+)
+
 

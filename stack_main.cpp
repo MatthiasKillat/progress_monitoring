@@ -3,7 +3,7 @@
 #include "include/singleton.hpp"
 #include "include/stack.hpp"
 
-#include "include/cache.hpp"
+// #include "include/cache.hpp"
 
 thread_local Stack stack;
 
