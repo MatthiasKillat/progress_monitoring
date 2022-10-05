@@ -24,9 +24,12 @@ int main(void) {
     weak.print();
   }
   weak.print();
-
-  auto new_weak = cache.get_weak_ref();
+  
+  std::cout << "***********" << std::endl;
+  //auto new_weak = cache.get_weak_ref();
+  auto new_weak = cache.get_locked_ref();
   new_weak.print();
+  new_weak.unlock();
 
   auto strong = weak.get();
 
@@ -40,8 +43,9 @@ int main(void) {
 
   new_weak.invalidate();
   strong1.print();
+  std::cout << "***********" << std::endl;
 
-  //strong1.invalidate();
+  strong1.invalidate();
   strong1.print();
 
   auto new_weak2 = cache.get_weak_ref();
