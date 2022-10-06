@@ -23,9 +23,9 @@ public:
     };
 
     for (index_t i = 0; i < Capacity; ++i) {
-      auto &s = m_slots[i];
-      s.index = i;
-      s.deleter = &m_deleter;
+      auto &b = m_slots[i];
+      b.index = i;
+      b.deleter = &m_deleter;
       m_unused.push_back(i);
     }
   }
@@ -39,10 +39,10 @@ public:
         i = m_unused.front();
         m_unused.pop_front();
 
-        auto &s = get(i);
-        claim_uncontended(s);
+        auto &b = get(i);
+        claim_uncontended(b);
         m_maybeUsed.push_back(i);
-        return &s;
+        return &b;
       }
 
       auto n = m_maybeUsed.size();
@@ -52,10 +52,10 @@ public:
           i = m_maybeUsed.front();
           m_maybeUsed.pop_front();
 
-          auto &s = get(i);
-          if (claim_contended(s)) { // may fail if used
+          auto &b = get(i);
+          if (claim_contended(b)) { // may fail if used or exclusive
             m_maybeUsed.push_back(i);
-            return &s;
+            return &b;
           } else {
             // it is now at the end of queue again
             m_maybeUsed.push_back(i);
@@ -63,6 +63,8 @@ public:
         }
       }
       // todo: stop after some time if we were unsuccessful
+      // HEURISTICS: if we encountered an exclusive item block
+      // we may try again (as dould now be in unused)
       break;
     } while (true);
 
@@ -72,8 +74,11 @@ public:
   void ret(block &block) {
 
     if (block.weak == 0) {
-      if (block.reclaim()) {
-        // there can be no strong refs
+      // no further weak refs
+      if (block.transition(UNREFERENCED, EXCLUSIVE)) {
+        // now it can be in both queues but cannot be used
+        // from the maybeUSed queue anymore (CAS will fail)
+        std::cout << "***" << std::endl;
         if (block.weak == 0) { // required check?
           std::lock_guard<std::mutex> guard(m_mut);
           std::cout << "moved to unused " << block.index << std::endl;
@@ -87,8 +92,7 @@ public:
 
 private:
   std::mutex m_mut;
-  // 0 is a special block
-  std::array<block, Capacity + 1> m_slots;
+  std::array<block, Capacity> m_slots;
   std::deque<index_t> m_maybeUsed;
   std::deque<index_t> m_unused; // not needed to be a deque later
   std::atomic<count_t> m_count{73};
@@ -99,20 +103,19 @@ private:
 
   count_t update_count() { return m_count.fetch_add(1); }
 
-  void claim_uncontended(block &s) {
-    // can assume weak == 0 == strong
-    s.strong.store(1);
-    s.aba = update_count();
+  void claim_uncontended(block &b) {
+    // we have exclusive access
+    b.aba = update_count();
   }
 
-  bool claim_contended(block &s) {
-    if (!s.claim()) {
+  bool claim_contended(block &b) {
+    if (!b.make_exclusive()) {
       return false;
     }
     // now we know strong = 1, weak = ?
     // no strong refs can be created by others (requires strong >= 2)
 
-    s.aba = update_count(); // will invalidate old weak refs
+    b.aba = update_count(); // will invalidate old weak refs
     return true;
   }
 };

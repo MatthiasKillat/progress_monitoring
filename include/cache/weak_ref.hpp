@@ -1,105 +1,59 @@
 #pragma once
 
 #include "control_block.hpp"
+#include "strong_ref.hpp"
 
-// if the block is used, cache holds one ref
-// cache gives a weak ref
+#include <iostream>
+
 // weak refs can generate strong refs
 // weak refs can generate weak refs
 // strong refs can only generate strong refs
-
 // note weak_ref and strong_ref are not thread_safe
+
 template <class T, index_t Capacity> class weak_cache;
 
-template <class T> class weak_ref;
-
-template <typename T> class strong_ref {
-  friend class weak_ref<T>;
-  using block_t = control_block<T>;
-
-public:
-  ~strong_ref() {
-    if (valid()) {
-      unref();
-    }
-  }
-
-  T *get() { return &m_block->value; }
-
-  T &operator*() { return m_block->value; }
-
-  bool valid() { return m_block != nullptr; }
-
-  void invalidate() {
-    if (valid()) {
-      unref();
-      m_block = nullptr;
-    }
-  }
-
-  void print() {
-    if (!valid()) {
-      std::cout << "strong nullref" << std::endl;
-      return;
-    }
-
-    std::cout << "strong ref i " << m_block->index << " s = " << m_block->strong
-              << " w = " << m_block->weak << " aba = " << m_block->aba
-              << std::endl;
-  }
-
-private:
-  block_t *m_block{nullptr};
-
-  strong_ref(block_t &block) : m_block(&block) {}
-
-  strong_ref() = default;
-
-  // note: copy is forbidden for simplicity, only create via weak_ref
-  // TODO: relax?
-  strong_ref(const strong_ref &other) = delete; // TODO: RVO problems
-
-  void unref() {
-    --m_block->strong;
-    if (m_block->weak == 0) {
-      m_block->invoke_deleter(); // TODO: check logic
-    }
-  }
-};
+// TODO: assignment operators etc.
 
 template <typename T> class weak_ref {
   template <typename S, index_t C> friend class weak_cache;
 
 public:
-  ~weak_ref() {
-    if (valid()) {
-      unref();
-    }
-  }
-
+  // created only by weak_cache
+  // copyable, movable
   weak_ref(const weak_ref &other) : m_block(other.m_block), m_aba(other.m_aba) {
     if (valid()) {
       ref();
     }
   }
 
-  strong_ref<T> get() {
+  weak_ref(weak_ref &&other) : m_block(other.m_block) {
+    other.m_block = nullptr;
+  }
+
+  ~weak_ref() {
+    if (valid()) {
+      unref();
+    }
+  }
+
+  strong_ref<T> get_strong_ref() {
     if (!valid()) {
-      return strong_ref<T>();
+      return strong_ref<T>(); // moves
     }
 
     // valid
     if (m_block->try_strong_ref()) {
       if (aba_check()) {
-        return strong_ref<T>(*m_block);
+        return strong_ref<T>(m_block); // moves
       }
-      m_block->strong_unref();
+      m_block->strong_unref(); // moves
     }
 
     invalidate_unchecked();
     return strong_ref<T>();
   }
 
+  // debug
   void print() {
     if (!valid()) {
       std::cout << "weak nullref" << std::endl;
@@ -110,8 +64,8 @@ public:
               << m_aba << ")" << std::endl;
   }
 
-  // todo: operator bool
   bool valid() { return m_block != nullptr; }
+  operator bool() { return valid(); }
 
   void invalidate() {
     if (valid()) {
@@ -119,7 +73,13 @@ public:
     }
   }
 
+  // expert API
+  bool try_lock() { return m_block->try_strong_ref(); }
+
+  // expert API
   // caution, unchecked and only to be used if this was gotten valid AND locked
+  // in fact, it must be called otherwise the ref is lost (we do not want to
+  // memorize that we need to call it for a special case only)
   void unlock() { m_block->strong_unref(); }
 
 private:

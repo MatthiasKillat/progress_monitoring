@@ -1,7 +1,9 @@
 #pragma once
 
 #include "cache.hpp"
-#include "ref.hpp"
+#include "control_block.hpp"
+#include "strong_ref.hpp"
+#include "weak_ref.hpp"
 
 template <class T, index_t Capacity = 4> class weak_cache {
 
@@ -14,27 +16,28 @@ public:
     if (block) {
       // block.strong is 1 and only this get can change it
       // (if stalled, the block is lost)
-      block->strong.store(2); // now others may try to generate strong refs
-                              // again but will fail due to aba
+      block->strong.store(
+          UNREFERENCED); // now others may try to generate strong refs
+                         // again but will fail due to aba
       return weak_ref<T>(*block);
     }
     return weak_ref<T>();
   }
 
-  // if not null, the reference is locke (i.e. cannot be deleted by cache before
-  // being unlocked)
+  // if not a nullref, the reference is locked (i.e. cannot be deleted by cache
+  // before being unlocked)
   weak_ref<T> get_locked_ref() {
     auto block = m_cache.get();
     if (block) {
       // we have an additional strong ref count
-      block->strong.store(3); // now others may try to generate strong refs
+      block->strong.store(UNREFERENCED +
+                          1); // now others may try to generate strong refs
                               // again but will fail due to aba
       return weak_ref<T>(*block);
     }
     return weak_ref<T>();
   }
 
-  // cannot copy the ref
   strong_ref<T> get_strong_ref() {
     auto weak_ref = get_weak_ref();
     return weak_ref.get();

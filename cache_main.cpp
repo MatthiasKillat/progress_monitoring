@@ -13,7 +13,7 @@ int main(void) {
   weak.print();
 
   {
-    auto strong = weak.get();
+    auto strong = weak.get_strong_ref();
     strong.print();
 
     weak_ref<int> weak2(weak);
@@ -32,14 +32,14 @@ int main(void) {
   new_weak.print();
   new_weak.unlock();
 
-  auto strong = weak.get();
+  auto strong = weak.get_strong_ref();
 
   std::cout << "***********" << std::endl;
   new_weak.print(); // only one user (invalidated 1)
   strong.print(); // nullref
   new_weak.print();
 
-  auto strong1 = new_weak.get();
+  auto strong1 = new_weak.get_strong_ref();
   strong1.print();
 
   new_weak.invalidate();
