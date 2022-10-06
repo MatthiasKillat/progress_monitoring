@@ -1,12 +1,13 @@
 #include <iostream>
 
-#include "include/cache.hpp"
+#include "cache/weak_cache.hpp"
 
 int main(void) {
 
-   using MyCache = weak_cache<int, 1>;
+  // using MyCache = weak_cache<int, 2>;
+  using MyCache = weak_cache<int, 1>;
 
-   MyCache cache;
+  MyCache cache;
 
   auto weak = cache.get_weak_ref();
   weak.print();
