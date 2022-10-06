@@ -4,6 +4,12 @@
 
 template <class T> class weak_ref;
 
+// TODO: consider not allowing it to be null but then
+// weak_ref has to return a pointer or similar (as it can fail to provide a
+// valid strong_ref)
+//
+// the contract is basically: if strong_ref is valid and not invalidated,
+// the it can be safely accessed
 template <typename T> class strong_ref {
   friend class weak_ref<T>;
   using block_t = control_block<T>;

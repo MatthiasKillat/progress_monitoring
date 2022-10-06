@@ -9,6 +9,7 @@
 #include <type_traits>
 
 #include "control_block.hpp"
+#include "counting_queue.hpp"
 
 template <class T, index_t Capacity> class cache {
   static constexpr index_t DEFAULT_INDEX = 0;
@@ -41,24 +42,22 @@ public:
 
         auto &b = get(i);
         claim_uncontended(b);
-        m_maybeUsed.push_back(i);
+        m_maybeUsed.push(i);
         return &b;
       }
 
       auto n = m_maybeUsed.size();
 
       for (uint32_t i = 0; i < n; ++i) {
-        if (!m_maybeUsed.empty()) {
-          i = m_maybeUsed.front();
-          m_maybeUsed.pop_front();
-
-          auto &b = get(i);
+        auto maybeIndex = m_maybeUsed.pop();
+        if (maybeIndex.has_value()) {
+          auto &b = get(*maybeIndex);
           if (claim_contended(b)) { // may fail if used or exclusive
-            m_maybeUsed.push_back(i);
+            m_maybeUsed.push(i);
             return &b;
           } else {
             // it is now at the end of queue again
-            m_maybeUsed.push_back(i);
+            m_maybeUsed.push(i);
           }
         }
       }
@@ -77,14 +76,12 @@ public:
       // no further weak refs
       if (block.transition(UNREFERENCED, EXCLUSIVE)) {
         // now it can be in both queues but cannot be used
-        // from the maybeUSed queue anymore (CAS will fail)
-        std::cout << "***" << std::endl;
+        // from the maybeUsed queue anymore (CAS will fail)
         if (block.weak == 0) { // required check?
           std::lock_guard<std::mutex> guard(m_mut);
           std::cout << "moved to unused " << block.index << std::endl;
+          m_maybeUsed.decrease(block.index);
           m_unused.push_back(block.index);
-        } else {
-          // still in maybeUsed
         }
       }
     }
@@ -93,7 +90,7 @@ public:
 private:
   std::mutex m_mut;
   std::array<block, Capacity> m_slots;
-  std::deque<index_t> m_maybeUsed;
+  counting_queue<Capacity> m_maybeUsed;
   std::deque<index_t> m_unused; // not needed to be a deque later
   std::atomic<count_t> m_count{73};
 
@@ -112,7 +109,7 @@ private:
     if (!b.make_exclusive()) {
       return false;
     }
-    // now we know strong = 1, weak = ?
+    // now we know strong = EXCLUSIVE = 1, weak = ?
     // no strong refs can be created by others (requires strong >= 2)
 
     b.aba = update_count(); // will invalidate old weak refs

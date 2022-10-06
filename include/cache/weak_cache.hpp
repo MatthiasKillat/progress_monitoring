@@ -14,8 +14,8 @@ public:
   weak_ref<T> get_weak_ref() {
     auto block = m_cache.get();
     if (block) {
-      // block.strong is 1 and only this get can change it
-      // (if stalled, the block is lost)
+      // block.strong is EXCLUSIVE = 1 and only this get can change it
+      // (if stalled, the block is lost but otherwise the cache still works)
       block->strong.store(
           UNREFERENCED); // now others may try to generate strong refs
                          // again but will fail due to aba
