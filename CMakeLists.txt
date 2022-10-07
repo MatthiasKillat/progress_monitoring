@@ -42,4 +42,8 @@ add_executable(weak_cache
   cache_main.cpp
 )
 
+add_executable(monitoring
+  monitoring_main.cpp
+)
+
 

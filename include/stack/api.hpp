@@ -10,17 +10,15 @@ namespace monitor {
 
 namespace api {
 
-inline void push(value_t value, stack &s, stack_allocator &a) {
+inline void push(value_t /*value*/, stack &s, stack_allocator &a) {
 
   auto *entry = a.allocate();
 
   // can also assume it never fails and crash if it does
   if (!entry) {
-    std::cerr << "Monitoring allocation error" << std::endl;
+    std::cerr << "THREAD MONITORING - allocation error " << std::endl;
     std::terminate();
   }
-
-  entry->value = value;
 
   s.push(*entry);
 }
@@ -31,6 +29,7 @@ inline void free(stack_entry *entry, stack_allocator &a) {
   a.deallocate(entry);
 }
 
+// TODO: clean thread_local singleton approach
 thread_local monitor::stack_allocator tl_allocator;
 thread_local monitor::stack tl_stack;
 

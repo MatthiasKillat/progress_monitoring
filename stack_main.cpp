@@ -1,8 +1,4 @@
-#include "include/stack/api.hpp"
-#include "stack/allocator.hpp"
 #include "stack/api.hpp"
-#include "stack/guard.hpp"
-#include "stack/stack.hpp"
 
 #include <iostream>
 

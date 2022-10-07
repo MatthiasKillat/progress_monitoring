@@ -48,7 +48,7 @@ public:
   void print() {
     auto p = top.load();
     while (p) {
-      std::cout << p->count << " (" << p->value << ") ";
+      std::cout << p->count << " ";
       p = p->next;
     }
     std::cout << "eos" << std::endl;
@@ -105,7 +105,7 @@ public:
     // iterate further while the stack does not change
     do {
       // print successfully read value
-      std::cout << entry.count << " (" << entry.value << ") ";
+      std::cout << entry.count << " ";
 
       if (entry.next == nullptr) {
         std::cout << std::endl;
@@ -114,11 +114,18 @@ public:
       std::memcpy(&entry, entry.next, sizeof(stack_entry));
     } while (count == oldCount);
 
-    // if the count changes we consider the memcpy as failed and do not process
-    // further entries
+    // if the count changes we consider the memcpy as failed and do not
+    // process further entries
+    std::cout << "\nconcurrent_iterate incomplete - entries changed"
+              << std::endl;
 
-    std::cout << std::endl;
     return false;
+  }
+
+  void clear() {
+    // TODO -> needs deallocation (but we handle this externally for technical
+    // reasons)
+    top = nullptr;
   }
 
 private:
