@@ -8,21 +8,16 @@
 #include <optional>
 #include <type_traits>
 
-// must be memcpyable
-struct StackEntry {
-  StackEntry() = default;
+#include "entry.hpp"
 
-  uint64_t value;
-  uint64_t count{0};
-  StackEntry *next;
-};
+namespace monitor {
 
 // only modified in one context
-class Stack {
+class stack {
 public:
-  Stack() : top{nullptr} {}
+  stack() : top{nullptr} {}
 
-  void push(StackEntry &entry) {
+  void push(stack_entry &entry) {
     entry.count = count; // must happen before stack actually changes (can
                          // lead to false positives which is ok as it only
                          // invalidates peeks)
@@ -41,13 +36,13 @@ public:
     top = &entry;
   }
 
-  StackEntry *pop() {
+  stack_entry *pop() {
     auto p = top.load();
     if (!p) {
       return nullptr;
     }
     top.store(p->next);
-    return top;
+    return p;
   }
 
   void print() {
@@ -60,15 +55,15 @@ public:
   }
 
   // using optional would require an additional copy
-  bool peek(StackEntry &result) {
+  bool peek(stack_entry &result) {
 
-    StackEntry *t = top.load();
+    stack_entry *t = top.load();
     while (t) {
       // TODO: enforce order with fences
       auto oldCount = count.load(std::memory_order_acquire);
 
       // top may change but memcpy will succeed (potentially with garbage)
-      std::memcpy(&result, &t, sizeof(StackEntry));
+      std::memcpy(&result, &t, sizeof(stack_entry));
 
       // todo: atomic
       // must happen after memcpy
@@ -88,8 +83,8 @@ public:
   // the meantime
   bool concurrent_iterate() {
 
-    StackEntry entry;
-    StackEntry *t;
+    stack_entry entry;
+    stack_entry *t;
     uint64_t oldCount;
 
     std::cout << "concurrent_iterate ";
@@ -103,7 +98,7 @@ public:
 
       oldCount = count.load(std::memory_order_acquire);
 
-      std::memcpy(&entry, t, sizeof(StackEntry));
+      std::memcpy(&entry, t, sizeof(stack_entry));
 
     } while (count != oldCount); // or stop directly at first failure?
 
@@ -116,7 +111,7 @@ public:
         std::cout << std::endl;
         return true; // successfully read all entries
       }
-      std::memcpy(&entry, entry.next, sizeof(StackEntry));
+      std::memcpy(&entry, entry.next, sizeof(stack_entry));
     } while (count == oldCount);
 
     // if the count changes we consider the memcpy as failed and do not process
@@ -129,61 +124,8 @@ public:
 private:
   // we want to read the stack from another thread (peek)
   // atomic needed if we sync with count?
-  std::atomic<StackEntry *> top{nullptr};
+  std::atomic<stack_entry *> top{nullptr};
   std::atomic<uint64_t> count{0};
 };
 
-// will require that start and end happen in the same scope
-class StackGuard {
-public:
-  StackGuard(Stack &stack, uint64_t value = 0) : m_stack(stack) {
-    m_entry.value = value;
-    m_stack.push(m_entry);
-    std::cout << "push ";
-    m_stack.print();
-  }
-
-  ~StackGuard() {
-    m_stack.pop();
-    std::cout << "pop ";
-    m_stack.print();
-  }
-
-private:
-  StackEntry m_entry;
-  Stack &m_stack;
-};
-
-template <uint32_t N, uint32_t C = 1> class Cache {
-  // by the time we wrap around t actually add 0 as a value the cache contains
-  // other entries
-  static constexpr uint32_t INITIAL_ENTRY = 0;
-
-public:
-  // no duplicate checks for efficiency
-
-  void add(uint64_t value) {
-    auto i = value % N;
-    auto n = next[i];
-    data[i][n] = value; // TODO: do not allow null values
-    next[i] = (n + 1) % C;
-  }
-
-  // we never remove but only overwrite the latest per line
-
-  bool find(uint64_t value) {
-    auto i = value % N;
-    auto &line = data[i];
-    for (uint32_t j = 0; j < C; ++j) {
-      if (line[j] == value) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-private:
-  std::array<std::array<uint64_t, C>, N> data{
-      std::array<uint64_t, C>{INITIAL_ENTRY}};
-  std::array<uint32_t, N> next{0};
-};
+} // namespace monitor

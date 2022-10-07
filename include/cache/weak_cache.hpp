@@ -5,6 +5,8 @@
 #include "strong_ref.hpp"
 #include "weak_ref.hpp"
 
+// TODO: revisit the problem later when relevant
+
 template <class T, index_t Capacity = 4> class weak_cache {
 
   using block = control_block<T>;

@@ -1,49 +1,41 @@
+#include "include/stack/api.hpp"
+#include "stack/allocator.hpp"
+#include "stack/api.hpp"
+#include "stack/guard.hpp"
+#include "stack/stack.hpp"
+
 #include <iostream>
 
-#include "include/singleton.hpp"
-#include "include/stack.hpp"
-
-// #include "include/cache.hpp"
-
-thread_local Stack stack;
+using namespace monitor;
 
 void bar() {
 
-  StackGuard g(stack, 21);
-  std::cout << "end bar" << std::endl;
+  api::tl_push(74);
 
-  stack.concurrent_iterate();
+  api::tl_iterate();
+  api::tl_pop();
 }
 
 void foo() {
 
-  StackGuard g(stack, 73);
+  api::tl_push(73);
+
+  std::cout << "\ncall bar" << std::endl;
   bar();
-  std::cout << "end foo" << std::endl;
-  stack.concurrent_iterate();
+  std::cout << "end bar\n" << std::endl;
+  api::tl_iterate();
+  api::tl_pop();
 }
 
 int main(void) {
-  stack.print();
+  api::tl_push(72);
+  api::tl_stack.print();
 
-  StackGuard g(stack, 42);
+  std::cout << "\ncall foo" << std::endl;
   foo();
-  stack.concurrent_iterate();
+  std::cout << "end foo\n" << std::endl;
 
-  Cache<4, 2> cache;
-
-  cache.add(66);
-  if (cache.find(66)) {
-    std::cout << "66 in cache\n";
-  }
-
-  if (cache.find(70)) {
-    std::cout << "70 in cache\n";
-  }
-
-
-
- 
+  api::tl_pop();
 
   return EXIT_SUCCESS;
 }
