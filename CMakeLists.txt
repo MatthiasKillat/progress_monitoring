@@ -46,4 +46,6 @@ add_executable(monitoring
   monitoring_main.cpp
 )
 
+target_link_libraries(monitoring PRIVATE Threads::Threads)
+
 

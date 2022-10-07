@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "monitoring/source_location.hpp"
-#include "time.hpp"
+#include "monitoring/time.hpp"
 
 namespace monitor {
 
@@ -15,7 +15,7 @@ namespace monitor {
 using checkpoint_id_t = uint64_t;
 
 struct checkpoint {
-  source_location location{nullptr};
+  source_location location;
   checkpoint_id_t id;
   std::atomic<time_t> deadline{0};
 };
@@ -26,7 +26,7 @@ using value_t = uint64_t;
 struct stack_entry {
   stack_entry() = default;
 
-  checkpoint check;
+  checkpoint data;
 
   uint64_t count{0};
   stack_entry *next;

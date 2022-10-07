@@ -18,5 +18,5 @@ inline std::ostream &operator<<(std::ostream &s,
   return s;
 }
 
-#define CURRENT_SOURCE_LOCATION                                                \
+#define THIS_SOURCE_LOCATION                                                   \
   source_location { __FILE__, __LINE__, __func__ }

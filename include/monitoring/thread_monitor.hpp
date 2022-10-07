@@ -48,7 +48,7 @@ public:
   }
 
   void deregister(thread_state &state) {
-    // we expect it to bbe registered (misuse otherwise)
+    // we expect it to be registered (misuse otherwise)
     std::lock_guard<thread_monitor> g(*this);
     auto index = state.index;
     auto iter = std::find(m_registered.begin(), m_registered.end(), index);
@@ -56,6 +56,10 @@ public:
     deinit(state);
     m_free.push(index);
   }
+
+  void start_active_monitoring() {}
+
+  void stop_active_monitoring() {}
 
   void lock() { m_mutex.lock(); }
   void unlock() { m_mutex.unlock(); }
@@ -79,7 +83,10 @@ private:
     state.tid = std::this_thread::get_id();
   }
 
-  void deinit(thread_state &state) { state.checkpoints.clear(); }
+  void deinit(thread_state &state) {
+    state.tid = thread_id_t();
+    state.checkpoint_stack.clear();
+  }
 };
 
 } // namespace monitor

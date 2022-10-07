@@ -15,7 +15,7 @@ using index_t = uint32_t;
 struct thread_state {
   // nested functions require a lock-free checkpoint stack,
   // suitable for one writer and one concurrent reader
-  stack checkpoints;
+  stack checkpoint_stack;
   thread_id_t tid{0};
 
   index_t index;
@@ -34,7 +34,8 @@ struct thread_state {
 
   void invoke_handler(checkpoint &check) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_handler(check);
+    if (m_handler)
+      m_handler(check);
   }
 
 private:

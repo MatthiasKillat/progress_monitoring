@@ -1,7 +1,14 @@
 #pragma once
 
+#include "source_location.hpp"
 #include "thread_monitor.hpp"
 #include "thread_state.hpp"
+
+#include "report.hpp"
+#include "stack/allocator.hpp"
+#include "time.hpp"
+
+#include <assert.h>
 
 namespace monitor {
 
@@ -9,13 +16,17 @@ using monitor = thread_monitor;
 
 // TODO: better singleton approach
 thread_local thread_state *tl_state{nullptr};
+thread_local stack_allocator tl_stack_allocator;
 
 monitor &monitor_instance() {
   static monitor instance;
   return instance;
 }
 
-void start_monitoring() {
+bool is_monitored() { return tl_state != nullptr; }
+
+void start_this_thread_monitoring() {
+  assert(!is_monitored());
   tl_state = monitor_instance().register_this_thread();
 
   if (!tl_state) {
@@ -25,31 +36,71 @@ void start_monitoring() {
   }
 }
 
-void stop_monitoring() {
+void stop_this_thread_monitoring() {
+  assert(is_monitored());
   monitor_instance().deregister(*tl_state);
   tl_state = nullptr;
 }
 
-bool is_monitored() { return tl_state != nullptr; }
+template <typename H> void set_this_thread_handler(H &handler) {
+  assert(is_monitored());
+  tl_state->set_handler(handler);
+}
 
-// /// @brief stops the monitoring of the current (i.e. calling) thread
-// void stopMonitoring();
+void expect_progress_in(time_unit_t timeout, const source_location &location) {
+  assert(is_monitored());
 
-// /// @brief indicates whether the current thread is monitored
-// bool isMonitored();
+  auto *entry = tl_stack_allocator.allocate();
 
-// /// @brief indicates that the current thread awaits to progress to the
-// /// next conformation checkpoint in timeout units of time
-// void awaitProgressIn(time_unit_t timeout);
+  // TODO: use monitoring fatal assert
+  if (!entry) {
+    std::cerr << "MONITORING ERROR - stack allocation error" << std::endl;
+    std::terminate();
+  }
 
-// /// @brief indicates that the current thread awaits to progress to the
-// /// next conformation checkpoint in timeout units of time,
-// /// provides the source location for additional output in the timeout case
-// void awaitProgressIn(time_unit_t timeout, const SourceLocation &location);
+  auto &data = entry->data;
+  data.location = location;
+  // data.id = if provided
+  data.deadline = to_deadline(timeout);
+  std::cout << "push deadline " << data.deadline << std::endl;
+  tl_state->checkpoint_stack.push(*entry);
+}
 
-// /// @brief confirms that the current thread has progressed to the next
-// /// checkpoint, outputs timeout message if there is a timeout detected by the
-// /// current thread
-// void confirmProgress(const SourceLocation &location);
+void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
+                        const source_location &location) {
+  assert(is_monitored());
+
+  auto *entry = tl_stack_allocator.allocate();
+
+  // TODO: use monitoring fatal assert
+  if (!entry) {
+    std::cerr << "MONITORING ERROR - stack allocation error" << std::endl;
+    std::terminate();
+  }
+
+  auto &data = entry->data;
+  data.location = location;
+  data.id = check_id;
+  data.deadline = to_deadline(timeout);
+  std::cout << "push deadline " << data.deadline << std::endl;
+  tl_state->checkpoint_stack.push(*entry);
+}
+
+void confirm_progress(const source_location &location) {
+  assert(is_monitored());
+  auto now = to_time_unit(clock_t::now());
+
+  auto entry = tl_state->checkpoint_stack.pop();
+  assert(entry != nullptr);
+
+  auto &data = entry->data;
+  auto deadline = data.deadline.load();
+
+  uint64_t delta;
+  if (is_exceeded(deadline, now, delta)) {
+    // deadline violation - should be rare
+    self_report_violation(*tl_state, data, delta, location);
+  }
+}
 
 } // namespace monitor
