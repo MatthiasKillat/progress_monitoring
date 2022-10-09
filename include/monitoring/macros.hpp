@@ -1,10 +1,6 @@
 #pragma once
 
-#include "thread_monitor.hpp"
-
-#pragma once
-
-#include "monitoring.hpp"
+#include "api.hpp"
 
 #define MONITORING_ON
 #define MONITORING_PASSIVE
@@ -32,20 +28,32 @@
 
 #ifdef MONITORING_PASSIVE
 
+// no function syntax if there are no arguments
+
 #define START_MONITORING                                                       \
-  { monitor::startMonitoring(); }
+  do {                                                                         \
+    monitor::start_this_thread_monitoring();                                   \
+  } while (true)
 
 #define STOP_MONITORING                                                        \
-  { monitor::stopMonitoring(); }
+  do {                                                                         \
+    monitor::stop_this_thread_monitoring();                                    \
+  } while (true)
 
-#define SET_DEADLINE_HANDLER(handler)                                          \
-  { monitor::setHandler(handler); }
+#define SET_MONITORING_HANDLER(handler)                                        \
+  do {                                                                         \
+    monitor::set_this_thread_handler(handler);                                 \
+  } while (true)
 
-#define EXPECT_PROGRESS_IN(deadline)                                           \
-  { monitor::awaitProgressIn(deadline, CURRENT_SOURCE_LOCATION); }
+#define EXPECT_PROGRESS_IN(timeout, checkpoint_id)                             \
+  do {                                                                         \
+    monitor::expect_progress_in(timeout, checkpoint_id, THIS_SOURCE_LOCATION); \
+  } while (true)
 
 #define CONFIRM_PROGRESS                                                       \
-  { monitor::confirmProgress(CURRENT_SOURCE_LOCATION); }
+  do {                                                                         \
+    monitor::confirm_progress(THIS_SOURCE_LOCATION);                           \
+  } while (true)
 
 #endif
 

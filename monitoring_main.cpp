@@ -1,9 +1,12 @@
 #include "include/monitoring/api.hpp"
+#include "include/monitoring/macros.hpp"
 #include "include/source_location.hpp"
 #include "include/stack/entry.hpp"
 #include "monitoring/api.hpp"
 #include "monitoring/thread_monitor.hpp"
 #include "monitoring/thread_state.hpp"
+
+#include "monitoring/macros.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -35,15 +38,16 @@ void work1() {
 }
 
 void work2() {
-  monitor::start_this_thread_monitoring();
+  START_MONITORING;
+  SET_MONITORING_HANDLER(handler);
 
-  monitor::expect_progress_in(500ms, 66, THIS_SOURCE_LOCATION);
+  EXPECT_PROGRESS_IN(500ms, 66);
 
   std::this_thread::sleep_for(3000ms);
 
-  monitor::confirm_progress(THIS_SOURCE_LOCATION);
+  CONFIRM_PROGRESS;
 
-  monitor::stop_this_thread_monitoring();
+  STOP_MONITORING;
 }
 
 int main(void) {
