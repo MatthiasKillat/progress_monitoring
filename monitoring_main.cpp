@@ -40,6 +40,7 @@ void work1() {
 void work2() {
   START_MONITORING;
   SET_MONITORING_HANDLER(handler);
+  UNSET_MONITORING_HANDLER;
 
   EXPECT_PROGRESS_IN(500ms, 66);
 

@@ -26,7 +26,7 @@ monitor &monitor_instance() {
 bool is_monitored() { return tl_state != nullptr; }
 
 void start_this_thread_monitoring() {
-  assert(!is_monitored());
+  // assert(!is_monitored());
   tl_state = monitor_instance().register_this_thread();
 
   if (!tl_state) {
@@ -47,6 +47,11 @@ template <typename H> void set_this_thread_handler(H &handler) {
   tl_state->set_handler(handler);
 }
 
+void unset_this_thread_handler() {
+  assert(is_monitored());
+  tl_state->unset_handler();
+}
+
 void expect_progress_in(time_unit_t timeout, const source_location &location) {
   assert(is_monitored());
 
@@ -57,6 +62,9 @@ void expect_progress_in(time_unit_t timeout, const source_location &location) {
     std::cerr << "MONITORING ERROR - stack allocation error" << std::endl;
     std::terminate();
   }
+
+  // placement new
+  new (entry) stack_entry;
 
   auto &data = entry->data;
   data.location = location;
@@ -77,6 +85,8 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
     std::cerr << "MONITORING ERROR - stack allocation error" << std::endl;
     std::terminate();
   }
+  // placement new
+  new (entry) stack_entry;
 
   auto &data = entry->data;
   data.location = location;
@@ -101,6 +111,9 @@ void confirm_progress(const source_location &location) {
     // deadline violation - should be rare
     self_report_violation(*tl_state, data, delta, location);
   }
+
+  // no need to call a dtor of a stack_entry
+  tl_stack_allocator.deallocate(entry);
 }
 
 } // namespace monitor

@@ -23,6 +23,7 @@ struct checkpoint {
 // the stack payload
 using value_t = uint64_t;
 
+// no dtor needed
 struct stack_entry {
   stack_entry() = default;
 

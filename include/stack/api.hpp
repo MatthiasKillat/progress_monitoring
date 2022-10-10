@@ -20,12 +20,16 @@ inline void push(value_t /*value*/, stack &s, stack_allocator &a) {
     std::terminate();
   }
 
+  // placement new
+  new (entry) stack_entry;
+
   s.push(*entry);
 }
 
 inline stack_entry *pop(stack &s) { return s.pop(); }
 
 inline void free(stack_entry *entry, stack_allocator &a) {
+  // no need to call the dtor (efficiency)
   a.deallocate(entry);
 }
 

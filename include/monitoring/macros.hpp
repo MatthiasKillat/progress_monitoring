@@ -33,27 +33,32 @@
 #define START_MONITORING                                                       \
   do {                                                                         \
     monitor::start_this_thread_monitoring();                                   \
-  } while (true)
+  } while (0)
 
 #define STOP_MONITORING                                                        \
   do {                                                                         \
     monitor::stop_this_thread_monitoring();                                    \
-  } while (true)
+  } while (0)
 
 #define SET_MONITORING_HANDLER(handler)                                        \
   do {                                                                         \
     monitor::set_this_thread_handler(handler);                                 \
-  } while (true)
+  } while (0)
+
+#define UNSET_MONITORING_HANDLER                                               \
+  do {                                                                         \
+    monitor::unset_this_thread_handler();                                      \
+  } while (0)
 
 #define EXPECT_PROGRESS_IN(timeout, checkpoint_id)                             \
   do {                                                                         \
     monitor::expect_progress_in(timeout, checkpoint_id, THIS_SOURCE_LOCATION); \
-  } while (true)
+  } while (0)
 
 #define CONFIRM_PROGRESS                                                       \
   do {                                                                         \
     monitor::confirm_progress(THIS_SOURCE_LOCATION);                           \
-  } while (true)
+  } while (0)
 
 #endif
 

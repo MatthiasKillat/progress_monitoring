@@ -32,7 +32,14 @@ struct thread_state {
     m_handler = handler;
   }
 
+  void unset_handler() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_handler = 0;
+  }
+
   void invoke_handler(checkpoint &check) {
+    // can happen from monitoring thread, but only in the case of
+    // a deadline violation (rare)
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_handler)
       m_handler(check);
