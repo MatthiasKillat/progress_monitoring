@@ -57,6 +57,7 @@ public:
   // using optional would require an additional copy
   bool peek(stack_entry &result) {
 
+    // TODO: read only payload data
     stack_entry *t = top.load();
     while (t) {
       // TODO: enforce order with fences

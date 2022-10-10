@@ -25,6 +25,13 @@ monitor &monitor_instance() {
 
 bool is_monitored() { return tl_state != nullptr; }
 
+void start_active_monitoring(time_unit_t interval) {
+  // TODO: config time
+  monitor_instance().start_active_monitoring(interval);
+}
+
+void stop_active_monitoring() { monitor_instance().stop_active_monitoring(); }
+
 void start_this_thread_monitoring() {
   // assert(!is_monitored());
   tl_state = monitor_instance().register_this_thread();

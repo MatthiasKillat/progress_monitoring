@@ -13,13 +13,14 @@ using index_t = uint32_t;
 
 // weak/no encapsulation for simplicity and performance
 struct thread_state {
+
   // nested functions require a lock-free checkpoint stack,
   // suitable for one writer and one concurrent reader
   stack checkpoint_stack;
   thread_id_t tid{0};
+  bool used{false};
 
   index_t index;
-  std::atomic<uint64_t> aba{0}; // needed?
 
   thread_state() = default;
   thread_state(const thread_state &other) = delete;

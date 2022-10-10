@@ -2,8 +2,8 @@
 
 #include "api.hpp"
 
-#define MONITORING_ON
-#define MONITORING_PASSIVE
+#define MONITORING_MODE_PASSIVE
+#define MONITORING_MODE_ACTIVE
 
 #ifdef MONITORING_OFF
 
@@ -19,7 +19,7 @@
 
 #else
 
-#ifdef MONITORING_ACTIVE
+#ifdef MONITORING_MODE_ACTIVE
 
 // we always need to passively monitor to ensure we detect each deadline
 // violation
@@ -62,18 +62,20 @@
 
 #endif
 
-#ifdef MONITORING_ACTIVE
+#ifdef MONITORING_MODE_ACTIVE
 
-#define ACTIVATE_MONITORING(interval)                                          \
-  { monitor::threadMonitor().start(interval); }
+#define START_ACTIVE_MONITORING(interval)                                      \
+  { monitor::start_active_monitoring(interval); }                              \
+  while (0)
 
-#define DEACTIVATE_MONITORING                                                  \
-  { monitor::threadMonitor().stop(); }
+#define STOP_ACTIVE_MONITORING                                                 \
+  { monitor::stop_active_monitoring(); }                                       \
+  while (0)
 
 #else
 
-#define ACTIVATE_MONITORING(interval)
-#define DEACTIVATE_MONITORING
+#define START_ACTIVE_MONITORING(interval)
+#define STOP_ACTIVE_MONITORING
 
 #endif
 

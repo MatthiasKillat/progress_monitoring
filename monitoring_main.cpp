@@ -53,10 +53,14 @@ void work2() {
 
 int main(void) {
 
+  START_ACTIVE_MONITORING(10ms);
+
   std::thread t1(&work1);
   std::thread t2(&work2);
   t1.join();
   t2.join();
+
+  STOP_ACTIVE_MONITORING;
 
   return EXIT_SUCCESS;
 }
