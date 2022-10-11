@@ -23,8 +23,8 @@ void self_report_violation(thread_state &state, checkpoint &check,
 
 void monitoring_thread_report_violation(thread_state &state, checkpoint &check,
                                         uint64_t violation_delta) {
-  std::cout << "[Monitoring thread] deadline exceeded by " << violation_delta;
-  // << " time units at EXPECT PROGRESS in " << check.location;
+  std::cout << "[Monitoring thread] deadline exceeded by at least "
+            << violation_delta << " time units at " << check.location;
 
   if (check.id != 0) {
     std::cout << " checkpoint id " << check.id;

@@ -75,9 +75,8 @@ void expect_progress_in(time_unit_t timeout, const source_location &location) {
 
   auto &data = entry->data;
   data.location = location;
-  // data.id = if provided
+  data.id = 0;
   data.deadline = to_deadline(timeout);
-  std::cout << "push deadline " << data.deadline << std::endl;
   tl_state->checkpoint_stack.push(*entry);
 }
 
@@ -99,7 +98,6 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
   data.location = location;
   data.id = check_id;
   data.deadline = to_deadline(timeout);
-  std::cout << "push deadline " << data.deadline << std::endl;
   tl_state->checkpoint_stack.push(*entry);
 }
 
@@ -113,10 +111,13 @@ void confirm_progress(const source_location &location) {
   auto &data = entry->data;
   auto deadline = data.deadline.load();
 
-  uint64_t delta;
-  if (is_exceeded(deadline, now, delta)) {
-    // deadline violation - should be rare
-    self_report_violation(*tl_state, data, delta, location);
+  if (deadline > 0) {
+    uint64_t delta;
+    if (is_exceeded(deadline, now, delta)) {
+      // deadline violation - should be rare
+      self_report_violation(*tl_state, data, delta, location);
+    }
+    data.deadline.store(0); // to avoid reporting of monitoring thread
   }
 
   // no need to call a dtor of a stack_entry

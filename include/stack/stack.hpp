@@ -12,41 +12,42 @@
 
 namespace monitor {
 
-// only modified in one context
+// stack structure is only modified in one context (push/pop)
 class stack {
 public:
-  stack() : top{nullptr} {}
+  stack() : m_top{nullptr} {}
+
+  bool empty() { return m_top == nullptr; }
 
   void push(stack_entry &entry) {
-    entry.count = count; // must happen before stack actually changes (can
-                         // lead to false positives which is ok as it only
-                         // invalidates peeks)
+    entry.count = m_count.fetch_add(1, std::memory_order_acq_rel);
 
-    count.fetch_add(1, std::memory_order_acq_rel);
-    // a peek can fail even if the top was not yet changed
-    // if it read the old value before the increment
-
-    if (!top) {
+    if (!m_top) {
       entry.next = nullptr;
-      top = &entry;
+      m_top = &entry;
       return;
     }
 
-    entry.next = top;
-    top = &entry;
+    entry.next = m_top;
+    m_top = &entry;
   }
 
   stack_entry *pop() {
-    auto p = top.load();
+    auto p = m_top.load();
     if (!p) {
       return nullptr;
     }
-    top.store(p->next);
+    m_top.store(p->next);
     return p;
   }
 
+  stack_entry *top() { return m_top.load(); }
+
+  // TODO: synchronization
+  uint64_t count() { return m_count.load(); }
+
   void print() {
-    auto p = top.load();
+    auto p = m_top.load();
     while (p) {
       std::cout << p->count << " ";
       p = p->next;
@@ -54,25 +55,24 @@ public:
     std::cout << "eos" << std::endl;
   }
 
-  // using optional would require an additional copy
   bool peek(stack_entry &result) {
 
     // TODO: read only payload data
-    stack_entry *t = top.load();
+    stack_entry *t = m_top.load();
     while (t) {
       // TODO: enforce order with fences
-      auto oldCount = count.load(std::memory_order_acquire);
+      auto oldCount = m_count.load(std::memory_order_acquire);
 
-      // top may change but memcpy will succeed (potentially with garbage)
+      // m_top may change but memcpy will succeed (potentially with garbage)
       std::memcpy(&result, &t, sizeof(stack_entry));
 
       // todo: atomic
       // must happen after memcpy
-      if (count == oldCount) {
+      if (m_count == oldCount) {
         return true;
       }
-      // top changed, memcpy may have been invalid, try again
-      t = top.load();
+      // m_top changed, memcpy may have been invalid, try again
+      t = m_top.load();
     }
 
     return false;
@@ -91,17 +91,17 @@ public:
     std::cout << "concurrent_iterate ";
 
     do {
-      t = top.load();
+      t = m_top.load();
       if (!t) {
         std::cout << std::endl;
         return true; // no value, i.e. we read them all
       }
 
-      oldCount = count.load(std::memory_order_acquire);
+      oldCount = m_count.load(std::memory_order_acquire);
 
       std::memcpy(&entry, t, sizeof(stack_entry));
 
-    } while (count != oldCount); // or stop directly at first failure?
+    } while (m_count != oldCount); // or stop directly at first failure?
 
     // iterate further while the stack does not change
     do {
@@ -113,9 +113,9 @@ public:
         return true; // successfully read all entries
       }
       std::memcpy(&entry, entry.next, sizeof(stack_entry));
-    } while (count == oldCount);
+    } while (m_count == oldCount);
 
-    // if the count changes we consider the memcpy as failed and do not
+    // if the m_count changes we consider the memcpy as failed and do not
     // process further entries
     std::cout << "\nconcurrent_iterate incomplete - entries changed"
               << std::endl;
@@ -123,17 +123,11 @@ public:
     return false;
   }
 
-  void clear() {
-    // TODO -> needs deallocation (but we handle this externally for technical
-    // reasons)
-    top = nullptr;
-  }
-
 private:
   // we want to read the stack from another thread (peek)
-  // atomic needed if we sync with count?
-  std::atomic<stack_entry *> top{nullptr};
-  std::atomic<uint64_t> count{0};
+  // atomic needed if we sync with m_count?
+  std::atomic<stack_entry *> m_top{nullptr};
+  std::atomic<uint64_t> m_count{0};
 };
 
 } // namespace monitor

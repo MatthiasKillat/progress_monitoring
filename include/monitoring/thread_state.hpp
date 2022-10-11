@@ -18,7 +18,6 @@ struct thread_state {
   // suitable for one writer and one concurrent reader
   stack checkpoint_stack;
   thread_id_t tid{0};
-  bool used{false};
 
   index_t index;
 

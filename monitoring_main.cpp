@@ -24,11 +24,12 @@ void work1() {
   monitor::start_this_thread_monitoring();
   monitor::set_this_thread_handler(handler);
 
-  monitor::expect_progress_in(10ms, 42, THIS_SOURCE_LOCATION);
+  // NOTE: deadlines are monotonic (reasonable assumption?)
+  monitor::expect_progress_in(2000ms, 42, THIS_SOURCE_LOCATION);
   monitor::expect_progress_in(1000ms, 73, THIS_SOURCE_LOCATION);
   monitor::expect_progress_in(100ms, 21, THIS_SOURCE_LOCATION);
 
-  std::this_thread::sleep_for(2000ms);
+  std::this_thread::sleep_for(3s);
 
   monitor::confirm_progress(THIS_SOURCE_LOCATION);
   monitor::confirm_progress(THIS_SOURCE_LOCATION);
@@ -44,7 +45,7 @@ void work2() {
 
   EXPECT_PROGRESS_IN(500ms, 66);
 
-  std::this_thread::sleep_for(3000ms);
+  std::this_thread::sleep_for(2s);
 
   CONFIRM_PROGRESS;
 
@@ -53,7 +54,9 @@ void work2() {
 
 int main(void) {
 
-  START_ACTIVE_MONITORING(10ms);
+  START_ACTIVE_MONITORING(50ms);
+
+  std::this_thread::sleep_for(100ms);
 
   std::thread t1(&work1);
   std::thread t2(&work2);
