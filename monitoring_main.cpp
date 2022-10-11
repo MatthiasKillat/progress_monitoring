@@ -39,7 +39,7 @@ void work1() {
 }
 
 void work2() {
-  START_MONITORING;
+  START_THREAD_MONITORING;
   SET_MONITORING_HANDLER(handler);
   UNSET_MONITORING_HANDLER;
 
@@ -49,7 +49,7 @@ void work2() {
 
   CONFIRM_PROGRESS;
 
-  STOP_MONITORING;
+  STOP_THREAD_MONITORING;
 }
 
 int main(void) {
@@ -60,8 +60,10 @@ int main(void) {
 
   std::thread t1(&work1);
   std::thread t2(&work2);
+  // std::thread t3(&work2);
   t1.join();
   t2.join();
+  // t3.join();
 
   STOP_ACTIVE_MONITORING;
 

@@ -17,7 +17,7 @@
 namespace monitor {
 
 // TODO: config
-constexpr uint32_t MAX_THREADS = 2;
+constexpr uint32_t MAX_THREADS = 128;
 
 class thread_monitor {
   static constexpr uint32_t Capacity = MAX_THREADS;

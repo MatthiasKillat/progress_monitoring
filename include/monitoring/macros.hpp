@@ -30,12 +30,12 @@
 
 // no function syntax if there are no arguments
 
-#define START_MONITORING                                                       \
+#define START_THREAD_MONITORING                                                \
   do {                                                                         \
     monitor::start_this_thread_monitoring();                                   \
   } while (0)
 
-#define STOP_MONITORING                                                        \
+#define STOP_THREAD_MONITORING                                                 \
   do {                                                                         \
     monitor::stop_this_thread_monitoring();                                    \
   } while (0)
