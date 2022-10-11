@@ -21,13 +21,13 @@ protected:
 
     // TODO: part of this is better done only once in main
     START_ACTIVE_MONITORING(100ms);
-    START_THREAD_MONITORING;
+    START_THIS_THREAD_MONITORING;
     SET_MONITORING_HANDLER(handler);
   }
 
   virtual void TearDown() {
     EXPECT_FALSE(g_deadline_violation);
-    STOP_THREAD_MONITORING;
+    STOP_THIS_THREAD_MONITORING;
     STOP_ACTIVE_MONITORING;
   }
 };

@@ -1,21 +1,28 @@
 #pragma once
 
-#include "api.hpp"
+#include "config.hpp"
 
-#define MONITORING_MODE_PASSIVE
-#define MONITORING_MODE_ACTIVE
+#include "api.hpp"
 
 #ifdef MONITORING_OFF
 
-#define START_MONITORING
-#define STOP_MONITORING
-#define SET_HANDLER
-#define EXPECT_PROGRESS_IN(deadline)
-#define CONFIRM_PROGRESS
-#define SET_DEADLINE_HANDLER(handler)
+#define START_THIS_THREAD_MONITORING
 
-#define ACTIVATE_MONITORING(interval)
-#define DEACTIVATE_MONITORING
+#define STOP_THIS_THREAD_MONITORING
+
+#define SET_MONITORING_HANDLER(handler)
+
+#define UNSET_MONITORING_HANDLER
+
+#define EXPECT_PROGRESS_IN(deadline, checkpoint_id)
+
+#define CONFIRM_PROGRESS
+
+#define EXPECT_SCOPE_END_REACHED_IN(deadline, checkpoint_id)
+
+#define START_ACTIVE_MONITORING(interval)
+
+#define STOP_ACTIVE_MONITORING
 
 #else
 
@@ -23,19 +30,19 @@
 
 // we always need to passively monitor to ensure we detect each deadline
 // violation
-#define MONITORING_PASSIVE
+#define MONITORING_MODE_PASSIVE
 #endif
 
-#ifdef MONITORING_PASSIVE
+#ifdef MONITORING_MODE_PASSIVE
 
 // no function syntax if there are no arguments
 
-#define START_THREAD_MONITORING                                                \
+#define START_THIS_THREAD_MONITORING                                           \
   do {                                                                         \
     monitor::start_this_thread_monitoring();                                   \
   } while (0)
 
-#define STOP_THREAD_MONITORING                                                 \
+#define STOP_THIS_THREAD_MONITORING                                            \
   do {                                                                         \
     monitor::stop_this_thread_monitoring();                                    \
   } while (0)
@@ -60,6 +67,9 @@
     monitor::confirm_progress(THIS_SOURCE_LOCATION);                           \
   } while (0)
 
+#define EXPECT_SCOPE_END_REACHED_IN(deadline, checkpoint_id)                   \
+  monitor::guard(deadline, checkpoint_id, THIS_SOURCE_LOCATION)
+
 #endif
 
 #ifdef MONITORING_MODE_ACTIVE
@@ -75,6 +85,7 @@
 #else
 
 #define START_ACTIVE_MONITORING(interval)
+
 #define STOP_ACTIVE_MONITORING
 
 #endif

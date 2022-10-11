@@ -124,4 +124,23 @@ void confirm_progress(const source_location &location) {
   tl_stack_allocator.deallocate(entry);
 }
 
+// TODO: implement and test
+class guard {
+
+public:
+  guard(time_unit_t timeout, checkpoint_id_t check_id,
+        const source_location &location) {
+
+    m_location = location;
+    expect_progress_in(timeout, check_id, m_location);
+  }
+
+  guard(guard &) = delete;
+
+  ~guard() { confirm_progress(m_location); }
+
+private:
+  source_location m_location;
+};
+
 } // namespace monitor

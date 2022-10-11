@@ -4,6 +4,14 @@ project(thread-monitoring LANGUAGES CXX CUDA)
 set(CMAKE_CXX_STANDARD 17) 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -58,6 +66,10 @@ add_executable(monitoring
 
 target_link_libraries(monitoring PRIVATE Threads::Threads)
 
+add_executable(graph
+  graph_main.cpp
+)
+
 
 ## Tests
 
@@ -74,5 +86,18 @@ target_link_libraries(
 
 include(GoogleTest)
 gtest_discover_tests(test_monitoring)
+
+## Benchmark
+
+find_package(benchmark REQUIRED)
+
+add_executable(
+  benchmark_monitoring
+  ./benchmark/monitoring_benchmark.cpp
+)
+target_link_libraries(
+  benchmark_monitoring
+  benchmark::benchmark
+)
 
 

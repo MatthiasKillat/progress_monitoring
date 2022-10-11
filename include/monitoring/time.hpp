@@ -4,7 +4,7 @@
 
 namespace monitor {
 
-using time_unit_t = std::chrono::milliseconds;
+using time_unit_t = std::chrono::nanoseconds;
 using clock_t = std::chrono::steady_clock;
 using time_t = uint64_t;
 
