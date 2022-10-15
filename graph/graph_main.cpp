@@ -1,16 +1,27 @@
 #include <iostream>
-#include <thread>
+#include <mutex>
 
 #include <unistd.h>
 
-pid_t bar() { return getpid(); }
+// std::mutex g_mutex;
 
-pid_t *foo() { return new pid_t(bar()); }
+pid_t bar(int n) {
+  if (n > 0)
+    return bar(n - 1);
+  return getpid();
+}
+
+pid_t *foo() {
+  // std::lock_guard<std::mutex> g(g_mutex);
+  return new pid_t(bar(1));
+}
 
 int main(void) {
 
   pid_t *r = foo();
-  std::cout << *r << std::endl;
+  // std::cout << *r << std::endl;
+
+  delete r;
 
   return EXIT_SUCCESS;
 }

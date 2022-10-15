@@ -67,7 +67,7 @@ add_executable(monitoring
 target_link_libraries(monitoring PRIVATE Threads::Threads)
 
 add_executable(graph
-  graph_main.cpp
+  ./graph/graph_main.cpp
 )
 
 
