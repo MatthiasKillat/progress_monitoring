@@ -3,11 +3,7 @@
 #include <iostream>
 #include <thread>
 
-// #define MONITORING_OFF
-#define MONITORING_ACTIVE
-// #define MONITORING_PASSIVE
-
-#include "monitoring_interface.hpp"
+#include "monitoring/macros.hpp"
 using std::cout;
 using std::endl;
 
@@ -22,33 +18,36 @@ int add(int a, int b) {
 }
 
 int main(int argc, char **argv) {
-  ACTIVATE_MONITORING(100ms);
+  START_ACTIVE_MONITORING(100ms);
 
   // define a deadline handler
   // if we want to external use state we need to capture it
-  auto handler = []() { cout << "PANIC !!!" << endl; };
+  auto handler = [](monitor::checkpoint &check) {
+    (void)check;
+    cout << "PANIC !!!" << endl;
+  };
 
-  START_MONITORING;
+  START_THIS_THREAD_MONITORING;
 
   // install a deadline violation handler
   // can be safely set while there are no deadlines in this thread,
   // could be fused with START_MONITORING but should not be mandatory
-  SET_DEADLINE_HANDLER(handler);
+  SET_MONITORING_HANDLER(handler);
 
   std::packaged_task<int(int, int)> task(add);
   auto future = task.get_future();
 
-  EXPECT_PROGRESS_IN(ADD_TIME_BUDGET);
+  EXPECT_PROGRESS_IN(ADD_TIME_BUDGET, 1);
 
   task(2, 3);
   auto result = future.get();
 
   CONFIRM_PROGRESS;
 
-  STOP_MONITORING;
+  STOP_THIS_THREAD_MONITORING;
 
   std::cout << "add(2, 3) = " << result << std::endl;
 
-  DEACTIVATE_MONITORING;
+  STOP_ACTIVE_MONITORING;
   return 0;
 }

@@ -2,11 +2,7 @@
 
 #include "cuda_computation.h"
 
-// #define MONITORING_OFF
-#define MONITORING_ACTIVE
-// #define MONITORING_PASSIVE
-
-#include "monitoring_interface.hpp"
+#include "monitoring/macros.hpp"
 
 using namespace std::chrono_literals;
 
@@ -44,11 +40,11 @@ int main(void) {
   // 1) bundle with init function
   // 2) specialized monitored_threads - call wrapper, ctor, dtor
 
-  ACTIVATE_MONITORING(100ms); // call once, global
-  START_MONITORING;           // call per monitored thread
+  START_ACTIVE_MONITORING(100ms);
+  START_THIS_THREAD_MONITORING;
 
   for (int i = 0; i < ITERATIONS; ++i) {
-    EXPECT_PROGRESS_IN(1ms); // call per monitored section
+    EXPECT_PROGRESS_IN(1ms, 1); // call per monitored section
 
     // first run takes longer, likely due to some GPU init
     auto success = cuda_computation1(buffer, N);
@@ -62,8 +58,8 @@ int main(void) {
     print();
   }
 
-  STOP_MONITORING;       // corresponds to START_MONITORING
-  DEACTIVATE_MONITORING; // corresponds to ACTIVATE_MONITORING
+  STOP_THIS_THREAD_MONITORING;
+  STOP_ACTIVE_MONITORING;
 
   return EXIT_SUCCESS;
 }

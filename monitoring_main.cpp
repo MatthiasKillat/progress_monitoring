@@ -1,11 +1,4 @@
-#include "include/monitoring/api.hpp"
-#include "include/monitoring/macros.hpp"
-#include "include/source_location.hpp"
-#include "include/stack/entry.hpp"
 #include "monitoring/api.hpp"
-#include "monitoring/thread_monitor.hpp"
-#include "monitoring/thread_state.hpp"
-
 #include "monitoring/macros.hpp"
 
 #include <chrono>
