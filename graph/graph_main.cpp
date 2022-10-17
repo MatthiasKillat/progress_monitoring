@@ -4,6 +4,16 @@
 #include <unistd.h>
 
 // std::mutex g_mutex;
+namespace hap {
+namespace ablab {
+class Baz {
+public:
+  Baz() : x{73} {}
+  void baz() { std::cout << x << std::endl; }
+
+  int x;
+};
+} // namespace ablab
 
 pid_t bar(int n) {
   if (n > 0)
@@ -16,12 +26,19 @@ pid_t *foo() {
   return new pid_t(bar(1));
 }
 
+} // namespace hap
+
+using namespace hap;
+
 int main(void) {
 
   pid_t *r = foo();
   // std::cout << *r << std::endl;
 
   delete r;
+
+  ablab::Baz baz;
+  baz.baz(); // noop but detected as call
 
   return EXIT_SUCCESS;
 }
