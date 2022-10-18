@@ -145,6 +145,7 @@ def main():
 
     # TODO: filter as script args etc.
     filteredCalls = filter_prefix(transitiveCalls, "hap::")
+    #filteredCalls = filter_prefix(transitiveCalls, "")
 
     s = filename.split('.')
     outfileName = s[0] + "_calls.txt"

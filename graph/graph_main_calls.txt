@@ -1,8 +1,0 @@
-1: hap::ablab::Baz::Baz() calls: []
-
-2: hap::ablab::Baz::baz() calls: ['std::ostream::operator<<(int)', 'std::ostream::operator<<(std::ostream& (*)(std::ostream&))']
-
-3: hap::bar(int) calls: ['getpid', 'hap::bar(int)']
-
-4: hap::foo() calls: ['getpid', 'hap::bar(int)', 'operator delete(void*)', 'operator new(unsigned long)']
-

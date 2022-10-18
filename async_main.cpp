@@ -17,7 +17,7 @@ int add(int a, int b) {
   return a + b;
 }
 
-int main(int argc, char **argv) {
+int main(int, char **) {
   START_ACTIVE_MONITORING(100ms);
 
   // define a deadline handler

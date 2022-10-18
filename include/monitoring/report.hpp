@@ -21,6 +21,9 @@ void self_report_violation(thread_state &state, checkpoint &check,
     std::cout << " checkpoint id " << check.id;
   }
   std::cout << std::endl;
+#else
+  (void)violation_delta;
+  (void)location;
 #endif
   state.invoke_handler(check);
 }
@@ -35,6 +38,9 @@ void monitoring_thread_report_violation(thread_state &state, checkpoint &check,
     std::cout << " checkpoint id " << check.id;
   }
   std::cout << std::endl;
+#else
+  (void)violation_delta;
+  (void)check;
 #endif
   state.invoke_handler(check);
 }

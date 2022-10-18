@@ -8,7 +8,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
@@ -85,6 +85,15 @@ add_executable(
 )
 target_link_libraries(
   benchmark_monitoring
+  benchmark::benchmark
+)
+
+add_executable(
+  benchmark_general
+  ./benchmark/general_benchmark.cpp
+)
+target_link_libraries(
+  benchmark_general
   benchmark::benchmark
 )
 
