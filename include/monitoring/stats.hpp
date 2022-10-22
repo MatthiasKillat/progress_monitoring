@@ -27,7 +27,7 @@ struct stats {
   uint64_t min{std::numeric_limits<uint64_t>::max()};
   uint64_t max{0};
   double mean{0};
-  double variance{0};
+  double meanOfSquares{0};
 
   void print() {
     std::cout << "checkpoint id " << id << std::endl;
@@ -35,8 +35,26 @@ struct stats {
     std::cout << "min : " << min << std::endl;
     std::cout << "max : " << max << std::endl;
     std::cout << "mean : " << mean << std::endl;
-    std::cout << "variance : " << variance << std::endl;
-    std::cout << "standard deviation : " << std::sqrt(variance) << std::endl;
+    std::cout << "standard deviation : " << std::sqrt(variance()) << std::endl;
+  }
+
+  double variance() {
+    if (count < 2) {
+      return 0;
+    }
+    // estimate based on VarX = E[X*X] - E[X]*E[X]
+    // we keep the totals Tk = Sum X_i ^ k, hence
+    // n = count = T0,
+    // mean = T1 / n
+    // meanOfSquares = T2/n
+    // and can then estimate the variance as
+    // C * (n * T2 - T1*T1) / (n*n)
+    // with correction factor for bias
+    // C = n/(n-1)
+    double n = double(count);
+    double m1 = mean;
+    double m2 = meanOfSquares;
+    return (n / (n - 1)) * (m2 - m1 * m1);
   }
 };
 
@@ -60,18 +78,15 @@ public:
       stats.max = runtime;
     }
 
-    double t = (double)runtime;
+    // incremental computation of mean and variance
 
+    double t = double(runtime);
     double n = stats.count;
-    auto m = stats.mean;
-    stats.mean = (t + (n - 1) * m) / n;
+    auto m1 = stats.mean;
+    stats.mean = (t + (n - 1) * m1) / n;
 
-    if (stats.count < 2) {
-      // stats.variance = 0;
-      return;
-    }
-    double a = (n - 2) / (n - 1);
-    stats.variance = a * stats.variance + (t - m) * (t - m) / n;
+    auto m2 = stats.meanOfSquares;
+    stats.meanOfSquares = (t * t + (n - 1) * m2) / n;
   }
 
   static stats_monitor &instance() {
