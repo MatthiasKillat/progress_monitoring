@@ -7,3 +7,5 @@
 // the handler will still be called(if any)
 
 // #define DEADLINE_VIOLATION_OUTPUT_ON
+
+#define MONITORING_STATS

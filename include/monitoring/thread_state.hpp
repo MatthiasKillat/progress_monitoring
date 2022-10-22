@@ -49,7 +49,6 @@ private:
   std::function<void(checkpoint &)> m_handler;
 
   // the hot monitoring path is lock-free, but there are low-contention locks
-  // these are low contended
   // replacement with lock-free construct would perform worse
   // and be more complicated
   std::mutex m_mutex;

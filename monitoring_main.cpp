@@ -1,3 +1,4 @@
+#include "include/monitoring/api.hpp"
 #include "monitoring/api.hpp"
 #include "monitoring/macros.hpp"
 
@@ -59,6 +60,8 @@ int main(void) {
   // t3.join();
 
   STOP_ACTIVE_MONITORING;
+
+  monitor::print_stats();
 
   return EXIT_SUCCESS;
 }

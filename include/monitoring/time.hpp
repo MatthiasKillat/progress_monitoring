@@ -6,11 +6,12 @@ namespace monitor {
 
 using time_unit_t = std::chrono::nanoseconds;
 using clock_t = std::chrono::steady_clock;
+using time_point_t = std::chrono::time_point<clock_t, clock_t::duration>;
 using time_t = uint64_t;
 
 template <typename T> inline time_t to_time_unit(const T &timePoint) {
   auto unit = std::chrono::time_point_cast<time_unit_t>(timePoint);
-  return unit.time_since_epoch().count();
+  return (time_t)unit.time_since_epoch().count();
 }
 
 inline time_t to_deadline(time_unit_t timeout) {

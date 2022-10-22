@@ -18,6 +18,7 @@ struct checkpoint {
   source_location location;
   checkpoint_id_t id;
   std::atomic<time_t> deadline{0};
+  time_point_t start;
 };
 
 // the stack payload

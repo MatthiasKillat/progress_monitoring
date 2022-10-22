@@ -6,9 +6,11 @@
 
 #include "report.hpp"
 #include "stack/allocator.hpp"
+#include "stats.hpp"
 #include "time.hpp"
 
 #include <assert.h>
+#include <chrono>
 
 namespace monitor {
 
@@ -98,12 +100,19 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
   data.location = location;
   data.id = check_id;
   data.deadline = to_deadline(timeout);
+
+#ifdef MONITORING_STATS
+  // TODO: taking the time twice is bad
+  data.start = clock_t::now();
+#endif
   tl_state->checkpoint_stack.push(*entry);
 }
 
 void confirm_progress(const source_location &location) {
   assert(is_monitored());
-  auto now = to_time_unit(clock_t::now());
+
+  auto now = clock_t::now();
+  auto confirm_time = to_time_unit(now);
 
   auto entry = tl_state->checkpoint_stack.pop();
   assert(entry != nullptr);
@@ -113,12 +122,20 @@ void confirm_progress(const source_location &location) {
 
   if (deadline > 0) {
     uint64_t delta;
-    if (is_exceeded(deadline, now, delta)) {
+    if (is_exceeded(deadline, confirm_time, delta)) {
       // deadline violation - should be rare
       self_report_violation(*tl_state, data, delta, location);
     }
     data.deadline.store(0); // to avoid reporting of monitoring thread
   }
+#ifdef MONITORING_STATS
+  // TODO: check and optimize difference
+  auto runtime = now - data.start;
+  // TODO: clean duration logic
+  auto d = std::chrono::duration_cast<std::chrono::microseconds>(runtime);
+  // auto d = std::chrono::duration_cast<time_unit_t>(runtime);
+  stats_monitor::update(data.id, d.count());
+#endif
 
   // no need to call a dtor of a stack_entry
   tl_stack_allocator.deallocate(entry);
@@ -142,5 +159,11 @@ public:
 private:
   source_location m_location;
 };
+
+void print_stats() {
+#ifdef MONITORING_STATS
+  stats_monitor::print();
+#endif
+}
 
 } // namespace monitor
