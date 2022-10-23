@@ -28,7 +28,7 @@ void work1(int iterations) {
   for (int i = 0; i < iterations; ++i) {
     std::chrono::microseconds t(int64_t(dist(gen)));
 
-    EXPECT_PROGRESS_IN(1000ms, 1);
+    EXPECT_PROGRESS_IN(10000ms, 1);
     std::this_thread::sleep_for(t);
     CONFIRM_PROGRESS;
   }
@@ -47,7 +47,7 @@ void work2(int iterations) {
   for (int i = 0; i < iterations; ++i) {
     std::chrono::microseconds t(int64_t(dist(gen)));
 
-    EXPECT_PROGRESS_IN(1000ms, 2);
+    EXPECT_PROGRESS_IN(10000ms, 2);
     std::this_thread::sleep_for(t);
     CONFIRM_PROGRESS;
   }
@@ -63,7 +63,7 @@ int main(void) {
   std::cout << "uniform distribution mean " << mean(A, B) << " stddev "
             << stddev(A, B) << std::endl;
 
-  START_ACTIVE_MONITORING(50ms);
+  START_ACTIVE_MONITORING(100ms);
 
   // TODO: currently statistics gathering competes for
   // concurrent shared data access via mutex (change)

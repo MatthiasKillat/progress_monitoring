@@ -80,6 +80,10 @@ void expect_progress_in(time_unit_t timeout, const source_location &location) {
   data.id = 0;
   data.deadline = to_deadline(timeout);
   tl_state->checkpoint_stack.push(*entry);
+
+  // needed if we use some kind of adaptive deadline scheme
+  // this is too costly to be worth it
+  // monitor_instance().wake_up();
 }
 
 void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
@@ -106,6 +110,9 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
   data.start = clock_t::now();
 #endif
   tl_state->checkpoint_stack.push(*entry);
+
+  // this is too costly to be worth it
+  // monitor_instance().wake_up();
 }
 
 void confirm_progress(const source_location &location) {
