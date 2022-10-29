@@ -24,6 +24,7 @@ struct stats {
   checkpoint_id_t id{0};
 
   uint64_t count{0};
+  uint64_t violations{0};
   uint64_t min{std::numeric_limits<uint64_t>::max()};
   uint64_t max{0};
   double mean{0};
@@ -32,6 +33,7 @@ struct stats {
   void print() {
     std::cout << "checkpoint id " << id << std::endl;
     std::cout << "count : " << count << std::endl;
+    std::cout << "violations : " << violations << std::endl;
     std::cout << "min : " << min << std::endl;
     std::cout << "max : " << max << std::endl;
     std::cout << "mean : " << mean << std::endl;
@@ -60,7 +62,8 @@ struct stats {
 
 class stats_monitor {
 public:
-  static void update(checkpoint_id_t id, time_t runtime) {
+  static void update(checkpoint_id_t id, time_t runtime,
+                     bool violation = false) {
 
     // TODO: avoid these blocking between unrelated threads
     // and gather stats in local maps and merge them when the threads
@@ -69,6 +72,9 @@ public:
     std::lock_guard<std::mutex> g(inst.m_mutex);
     auto &stats = inst.get(id);
 
+    if (violation) {
+      ++stats.violations;
+    }
     ++stats.count;
 
     if (runtime < stats.min) {

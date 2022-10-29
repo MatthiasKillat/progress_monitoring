@@ -236,7 +236,8 @@ private:
 
   void monitor_loop() {
     while (m_active) {
-      auto now = clock_t::now();
+      // auto now = clock_t::now();
+      auto now = unow();
       auto min = check_deadlines(now);
 
       // TODO: better always wait the same time?
