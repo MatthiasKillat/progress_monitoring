@@ -95,6 +95,8 @@ public:
     m_condvar.notify_one();
   }
 
+  // TODO: maybe wake up
+
 private:
   // weakly contended, only for registration and deregistration
   // resgitration without mutex but only atomics is complicated
@@ -236,23 +238,22 @@ private:
 
   void monitor_loop() {
     while (m_active) {
-      // auto now = clock_t::now();
-      auto now = unow();
+      auto now = clock_t::now();
       auto min = check_deadlines(now);
 
       // TODO: better always wait the same time?
       auto d = to_deadline(m_interval);
-      adapt_interval(d, min);
+      // adapt_interval(d, min);
 
       // std::cout << "tick " << m_interval.count() << std::endl;
 
       auto wakeup_time = now + m_interval;
-      std::unique_lock<std::mutex> lock(m_thread_mutex);
-      m_wakeup.store(false, std::memory_order_relaxed);
-      m_condvar.wait_until(lock, wakeup_time, [&]() {
-        return this->m_wakeup.load(std::memory_order_relaxed);
-      });
-      // std::this_thread::sleep_until(wakeup);
+      // std::unique_lock<std::mutex> lock(m_thread_mutex);
+      // m_wakeup.store(false, std::memory_order_relaxed);
+      // m_condvar.wait_until(lock, wakeup_time, [&]() {
+      //   return this->m_wakeup.load(std::memory_order_relaxed);
+      // });
+      std::this_thread::sleep_until(wakeup_time);
     }
   }
 

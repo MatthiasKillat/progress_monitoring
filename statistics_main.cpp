@@ -1,3 +1,5 @@
+#define MONITORING_STATS
+
 #include "include/monitoring/api.hpp"
 #include "monitoring/api.hpp"
 #include "monitoring/macros.hpp"

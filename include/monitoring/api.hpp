@@ -11,6 +11,7 @@
 
 #include <assert.h>
 #include <chrono>
+#include <ctime>
 
 namespace monitor {
 
@@ -107,7 +108,8 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
 
 #ifdef MONITORING_STATS
   // TODO: taking the time twice is bad
-  data.start = unow();
+  data.start = clock_t::now();
+  // data.start = unow();
 #endif
   tl_state->checkpoint_stack.push(*entry);
 
@@ -117,8 +119,8 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
 
 void confirm_progress(const source_location &location) {
   assert(is_monitored());
-
-  auto now = unow();
+  auto now = clock_t::now();
+  // auto now = unow();
   auto confirm_time = to_time_unit(now);
 
   auto entry = tl_state->checkpoint_stack.pop();

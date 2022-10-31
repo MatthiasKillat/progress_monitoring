@@ -10,6 +10,7 @@
 #include <atomic>
 #include <chrono>
 #include <mutex>
+#include <thread>
 
 namespace {
 using namespace std::chrono_literals;
@@ -119,6 +120,52 @@ BENCHMARK_F(BM_Monitoring, DoubleDeadlineViolation)(benchmark::State &state) {
 }
 
 //***************
+//*Parameterized*
+//***************
+
+static void BM_P_MultiDeadline(benchmark::State &state) {
+  auto n = state.range(0);
+  tl_deadline_violation = false;
+  START_THIS_THREAD_MONITORING;
+  SET_MONITORING_HANDLER(handler);
+
+  for (auto _ : state) {
+    // ignore slight overhead of the loop
+    for (int i = 0; i < n; ++i) {
+      EXPECT_PROGRESS_IN(100ms, i);
+      CONFIRM_PROGRESS;
+    }
+  }
+
+  benchmark::ClobberMemory();
+  STOP_THIS_THREAD_MONITORING;
+}
+
+// BENCHMARK(BM_P_MultiDeadline)->RangeMultiplier(2)->Range(1, 128);
+BENCHMARK(BM_P_MultiDeadline)->DenseRange(1, 8);
+
+static void BM_P_MultiDeadlineViolation(benchmark::State &state) {
+  auto n = state.range(0);
+  tl_deadline_violation = false;
+  START_THIS_THREAD_MONITORING;
+  SET_MONITORING_HANDLER(handler);
+
+  for (auto _ : state) {
+    // ignore slight overhead of the loop
+    for (int i = 0; i < n; ++i) {
+      EXPECT_PROGRESS_IN(1ns, i);
+      std::this_thread::sleep_for(1ns);
+      CONFIRM_PROGRESS;
+    }
+  }
+  benchmark::ClobberMemory();
+  STOP_THIS_THREAD_MONITORING;
+}
+
+// BENCHMARK(BM_P_MultiDeadlineViolation)->RangeMultiplier(2)->Range(1, 128);
+BENCHMARK(BM_P_MultiDeadlineViolation)->DenseRange(1, 8);
+
+//***************
 //*Multithreaded*
 //***************
 
@@ -128,7 +175,8 @@ static void BM_MT_SingleDeadline(benchmark::State &state) {
   SET_MONITORING_HANDLER(handler);
 
   for (auto _ : state) {
-    EXPECT_PROGRESS_IN(100ms, 1);
+    EXPECT_PROGRESS_IN(1000ms, 1);
+    // std::this_thread::sleep_for(1000ns);
     CONFIRM_PROGRESS;
   }
 

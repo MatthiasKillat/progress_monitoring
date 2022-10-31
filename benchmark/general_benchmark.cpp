@@ -5,13 +5,11 @@
 #include <bits/types/clock_t.h>
 #include <chrono>
 #include <mutex>
+#include <random>
+#include <thread>
 
 namespace {
 using namespace std::chrono_literals;
-
-thread_local bool tl_deadline_violation{false};
-
-void handler(monitor::checkpoint &) { tl_deadline_violation = true; }
 
 inline void busy_loop(std::chrono::nanoseconds time) {
 
@@ -31,8 +29,82 @@ constexpr int ITERATIONS = 1000;
 
 // some unrelated reference benchmarks, TODO: move to reference benchmark file
 BENCHMARK_F(BM_General, DoNothing)(benchmark::State &state) {
+
   for (auto _ : state) {
   }
+
+  benchmark::ClobberMemory();
+}
+
+BENCHMARK_F(BM_General, Delta)(benchmark::State &state) {
+
+  uint8_t t = 133;
+  uint8_t t1 = 4;
+
+  auto time = monitor::clock_t::now();
+
+  for (auto _ : state) {
+  }
+
+  uint8_t d = t1 - t;
+
+  auto tp = monitor::clock_t::now();
+
+  using rep = decltype(tp)::rep;
+  std::cout << (typeid(rep) == typeid(uint64_t)) << std::endl;
+
+  // std::cout << "d " << unsigned(d) << std::endl;
+  // using rep_t = monitor::clock_t::duration::rep;
+  // auto h1 = typeid(rep_t).hash_code();
+  // auto h2 = typeid(int64_t).hash_code();
+  // std::cout << h1 << std::endl;
+  // std::cout << h2 << std::endl;
+  // std::cout << (h1 == h2) << std::endl;
+
+  benchmark::ClobberMemory();
+}
+
+BENCHMARK_F(BM_General, RandomSleep)(benchmark::State &state) {
+
+  std::random_device r;
+  std::mt19937 gen(r());
+
+  constexpr uint64_t m = 12345;
+  constexpr double s = 1000 * m;
+  constexpr double min = 0;
+  constexpr double max = 2 * m;
+
+  // transform from a 0-1 normal variable for numerical reasons
+  std::normal_distribution<double> dist(0, 1);
+
+  int n = 0;
+  double mean = 0;
+  for (auto _ : state) {
+    state.PauseTiming();
+    double v = dist(gen);
+    v = v * s + m;
+
+    if (v < min)
+      v = 0;
+    else if (v > max)
+      v = max;
+
+    mean = (n * mean + v) / (n + 1);
+    ++n;
+
+    auto t = static_cast<uint64_t>(v);
+    auto time = std::chrono::nanoseconds(t);
+
+    state.ResumeTiming();
+    busy_loop(time);
+    // auto time = std::chrono::nanoseconds(1000);
+    // auto wakeup = monitor::clock_t::now() + time;
+    // std::this_thread::sleep_until(wakeup);
+  }
+  std::cout << mean << std::endl;
+
+  auto tp = monitor::clock_t::now();
+  std::cout << sizeof(tp) << std::endl;
   benchmark::ClobberMemory();
 }
 

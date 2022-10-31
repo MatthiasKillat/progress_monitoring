@@ -24,6 +24,7 @@ void work1() {
   monitor::expect_progress_in(100ms, 21, THIS_SOURCE_LOCATION);
 
   std::this_thread::sleep_for(3s);
+  std::this_thread::sleep_for(1ms);
 
   monitor::confirm_progress(THIS_SOURCE_LOCATION);
   monitor::confirm_progress(THIS_SOURCE_LOCATION);
@@ -40,6 +41,7 @@ void work2() {
   EXPECT_PROGRESS_IN(500ms, 66);
 
   std::this_thread::sleep_for(2s);
+  std::this_thread::sleep_for(1ms);
 
   CONFIRM_PROGRESS;
 
