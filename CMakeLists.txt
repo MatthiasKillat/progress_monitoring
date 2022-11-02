@@ -40,10 +40,6 @@ add_executable(cuda_monitoring
 
 set_property(TARGET cuda_monitoring PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-add_executable(stack
-  stack_main.cpp
-)
-
 add_executable(weak_cache
   cache_main.cpp
 )

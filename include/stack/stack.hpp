@@ -78,51 +78,6 @@ public:
     return false;
   }
 
-  // TODO: can invoke some function on successfully read entry
-
-  // return true if we iterated over all entries and the stack did not change in
-  // the meantime
-  bool concurrent_iterate() {
-
-    stack_entry entry;
-    stack_entry *t;
-    uint64_t oldCount;
-
-    std::cout << "concurrent_iterate ";
-
-    do {
-      t = m_top.load();
-      if (!t) {
-        std::cout << std::endl;
-        return true; // no value, i.e. we read them all
-      }
-
-      oldCount = m_count.load(std::memory_order_acquire);
-
-      std::memcpy(&entry, t, sizeof(stack_entry));
-
-    } while (m_count != oldCount); // or stop directly at first failure?
-
-    // iterate further while the stack does not change
-    do {
-      // print successfully read value
-      std::cout << entry.count << " ";
-
-      if (entry.next == nullptr) {
-        std::cout << std::endl;
-        return true; // successfully read all entries
-      }
-      std::memcpy(&entry, entry.next, sizeof(stack_entry));
-    } while (m_count == oldCount);
-
-    // if the m_count changes we consider the memcpy as failed and do not
-    // process further entries
-    std::cout << "\nconcurrent_iterate incomplete - entries changed"
-              << std::endl;
-
-    return false;
-  }
-
 private:
   // we want to read the stack from another thread (peek)
   // atomic needed if we sync with m_count?

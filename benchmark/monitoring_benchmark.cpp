@@ -136,13 +136,37 @@ static void BM_P_MultiDeadline(benchmark::State &state) {
       CONFIRM_PROGRESS;
     }
   }
-
+  benchmark::DoNotOptimize(tl_deadline_violation);
   benchmark::ClobberMemory();
   STOP_THIS_THREAD_MONITORING;
 }
 
 // BENCHMARK(BM_P_MultiDeadline)->RangeMultiplier(2)->Range(1, 128);
 BENCHMARK(BM_P_MultiDeadline)->DenseRange(1, 8);
+
+static void BM_P_MultiNestedDeadline(benchmark::State &state) {
+  auto n = state.range(0);
+  tl_deadline_violation = false;
+  START_THIS_THREAD_MONITORING;
+  SET_MONITORING_HANDLER(handler);
+
+  for (auto _ : state) {
+    // ignore slight overhead of the loop
+    for (int i = 0; i < n; ++i) {
+      EXPECT_PROGRESS_IN(100ms, i);
+    }
+
+    for (int i = 0; i < n; ++i) {
+      CONFIRM_PROGRESS;
+    }
+  }
+  benchmark::DoNotOptimize(tl_deadline_violation);
+  benchmark::ClobberMemory();
+  STOP_THIS_THREAD_MONITORING;
+}
+
+// BENCHMARK(BM_P_MultiDeadline)->RangeMultiplier(2)->Range(1, 128);
+BENCHMARK(BM_P_MultiNestedDeadline)->DenseRange(1, 8);
 
 static void BM_P_MultiDeadlineViolation(benchmark::State &state) {
   auto n = state.range(0);
@@ -154,10 +178,11 @@ static void BM_P_MultiDeadlineViolation(benchmark::State &state) {
     // ignore slight overhead of the loop
     for (int i = 0; i < n; ++i) {
       EXPECT_PROGRESS_IN(1ns, i);
-      std::this_thread::sleep_for(1ns);
+      BUSY_LOOP(2ns);
       CONFIRM_PROGRESS;
     }
   }
+  benchmark::DoNotOptimize(tl_deadline_violation);
   benchmark::ClobberMemory();
   STOP_THIS_THREAD_MONITORING;
 }
@@ -193,7 +218,7 @@ static void BM_MT_SingleDeadlineViolation(benchmark::State &state) {
 
   for (auto _ : state) {
     EXPECT_PROGRESS_IN(1ns, 1);
-    BUSY_LOOP(100ns);
+    BUSY_LOOP(2ns);
     CONFIRM_PROGRESS;
   }
 
