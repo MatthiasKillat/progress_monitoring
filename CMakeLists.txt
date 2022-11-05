@@ -40,10 +40,6 @@ add_executable(cuda_monitoring
 
 set_property(TARGET cuda_monitoring PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-add_executable(weak_cache
-  cache_main.cpp
-)
-
 add_executable(monitoring
   monitoring_main.cpp
 )
@@ -55,10 +51,6 @@ add_executable(statistics
 )
 
 target_link_libraries(statistics PRIVATE Threads::Threads)
-
-add_executable(graph
-  ./graph/graph_main.cpp
-)
 
 ## Tests
 

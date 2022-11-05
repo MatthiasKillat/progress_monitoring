@@ -189,63 +189,14 @@ private:
     return min_deadline;
   }
 
-  // primitive adaptive wait
-  void adapt_interval(time_t planned_wakeup, time_t min_deadline) {
-
-    return;
-    // TODO: fix error
-    // auto delta = planned_wakeup - min_deadline;
-
-    // if planned_wakeup > min_deadline we need to downscale
-    // otherwise we upscale
-    // without wraparound: delta > 0
-    // TODO: account wraparound (need before/after function)
-
-    if (planned_wakeup > min_deadline) {
-      // if (delta < 0) {
-      if (m_interval == MIN_INTERVAL) {
-        return;
-      }
-      std::cout << "downscale" << std::endl;
-      auto interval = m_interval / 2;
-
-      if (interval > MIN_INTERVAL) {
-        m_interval = interval;
-      } else {
-        m_interval = MIN_INTERVAL;
-      }
-    } else {
-      if (m_interval == m_max_interval) {
-        return;
-      }
-      // we can add at least another interval inbetween
-      // TODO: is this the correct measure (unit)
-      if (planned_wakeup + uint64_t(m_interval.count()) < min_deadline) {
-        std::cout << "upscale" << std::endl;
-        auto interval = m_interval * 2;
-
-        if (interval < m_max_interval) {
-          m_interval = interval;
-        } else {
-          m_interval = m_max_interval;
-        }
-      } else {
-        std::cout << "no scaaling" << std::endl;
-        // no scaling
-      }
-    }
-  }
+  void sleep() {}
 
   void monitor_loop() {
     while (m_active) {
       auto now = clock_t::now();
       auto min = check_deadlines(now);
 
-      // TODO: better always wait the same time?
       auto d = to_deadline(m_interval);
-      // adapt_interval(d, min);
-
-      // std::cout << "tick " << m_interval.count() << std::endl;
 
       auto wakeup_time = now + m_interval;
       // std::unique_lock<std::mutex> lock(m_thread_mutex);

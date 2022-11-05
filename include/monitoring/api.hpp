@@ -6,7 +6,7 @@
 
 #include "report.hpp"
 #include "stack/allocator.hpp"
-#include "stats.hpp"
+#include "statistics.hpp"
 #include "time.hpp"
 
 #include <assert.h>

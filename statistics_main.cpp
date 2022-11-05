@@ -30,7 +30,7 @@ void work1(int iterations) {
   for (int i = 0; i < iterations; ++i) {
     std::chrono::microseconds t(int64_t(dist(gen)));
 
-    EXPECT_PROGRESS_IN(10000ms, 1);
+    EXPECT_PROGRESS_IN(10000us, 1);
     std::this_thread::sleep_for(t);
     CONFIRM_PROGRESS;
   }
@@ -49,7 +49,7 @@ void work2(int iterations) {
   for (int i = 0; i < iterations; ++i) {
     std::chrono::microseconds t(int64_t(dist(gen)));
 
-    EXPECT_PROGRESS_IN(10000ms, 2);
+    EXPECT_PROGRESS_IN(10000us, 2);
     std::this_thread::sleep_for(t);
     CONFIRM_PROGRESS;
   }
