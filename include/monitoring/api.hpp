@@ -78,7 +78,9 @@ void expect_progress_in(time_unit_t timeout, const source_location &location) {
   auto &data = entry->data;
   data.location = location;
   data.id = 0;
-  data.deadline = to_deadline(timeout);
+  auto d = to_deadline(timeout);
+  data.deadline = d;
+  data.deadline_validator = d;
   tl_state->deadlines.push(*entry);
 
   // needed if we use some kind of adaptive deadline scheme
@@ -103,7 +105,9 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
   auto &data = entry->data;
   data.location = location;
   data.id = check_id;
-  data.deadline = to_deadline(timeout);
+  auto d = to_deadline(timeout);
+  data.deadline = d;
+  data.deadline_validator = d;
 
 #ifdef MONITORING_STATS
   // TODO: taking the time twice is bad
@@ -133,17 +137,18 @@ void confirm_progress(const source_location &location) {
   bool exceeded{false};
 #endif
 
-  if (deadline != INVALID_TIME) {
+  if (deadline == data.deadline_validator) {
     uint64_t delta;
-    if (is_exceeded(deadline, confirm_time, delta)) {
+    if (is_violated(deadline, confirm_time, delta)) {
       // deadline violation - should be rare
 #ifdef MONITORING_STATS
       exceeded = true;
 #endif
       self_report_violation(*tl_state, data, delta, location);
     }
-    // to avoid reporting of monitoring thread
-    data.deadline.store(INVALID_TIME);
+    // to avoid reporting of monitoring thread, note that the monitoring thread
+    // increments the other variable
+    data.deadline.fetch_sub(1);
   }
 #ifdef MONITORING_STATS
   else {

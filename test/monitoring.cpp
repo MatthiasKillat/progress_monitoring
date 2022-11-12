@@ -3,33 +3,33 @@
 #include "monitoring/macros.hpp"
 
 #include <chrono>
+#include <thread>
 
 using namespace std::chrono_literals;
 
-std::atomic<bool> g_deadline_violation{false};
+std::atomic<int> g_deadline_violations{0};
 
 void handler(monitor::checkpoint &) {
   // we could e.g. extract the id of the violation from the checkpoint
-  std::cout << "HANDLER CALLED" << std::endl;
-  g_deadline_violation = true;
+  ++g_deadline_violations;
 }
 
 #define EXPECT_DEADLINE_MET                                                    \
   do {                                                                         \
     CONFIRM_PROGRESS;                                                          \
-    EXPECT_FALSE(g_deadline_violation);                                        \
+    EXPECT_EQ(g_deadline_violations, 0);                                       \
   } while (0)
 
 #define EXPECT_DEADLINE_VIOLATION                                              \
   do {                                                                         \
     CONFIRM_PROGRESS;                                                          \
-    EXPECT_TRUE(g_deadline_violation);                                         \
+    EXPECT_GE(g_deadline_violations, 0);                                       \
   } while (0)
 
 class MonitoringTest : public ::testing::Test {
 protected:
   virtual void SetUp() {
-    g_deadline_violation = false;
+    g_deadline_violations = 0;
     // we only monitor the main test thread in this example
 
     // TODO: part of this is better done only once in main
@@ -66,4 +66,34 @@ TEST_F(MonitoringTest, deadline_violation) {
 
   // should always succeed, i.e. violate the deadline
   EXPECT_DEADLINE_VIOLATION;
+}
+
+std::atomic<bool> g_run;
+
+void work() {
+  START_THIS_THREAD_MONITORING;
+  SET_MONITORING_HANDLER(handler);
+
+  EXPECT_PROGRESS_IN(100ms, 1);
+
+  while (g_run)
+    ;
+
+  CONFIRM_PROGRESS;
+  STOP_THIS_THREAD_MONITORING;
+}
+
+TEST_F(MonitoringTest, deadlock_leads_to_violation) {
+
+  g_run = true;
+
+  // will not return without being unlocked
+  std::thread t(work);
+
+  std::this_thread::sleep_for(500ms);
+
+  g_run = false;
+  t.join();
+
+  EXPECT_EQ(g_deadline_violations, 1);
 }

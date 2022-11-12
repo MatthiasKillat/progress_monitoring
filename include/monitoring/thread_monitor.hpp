@@ -18,9 +18,6 @@
 
 namespace monitor {
 
-// TODO: config
-constexpr uint32_t MAX_THREADS = 128;
-
 class thread_monitor {
   static constexpr uint32_t Capacity = MAX_THREADS;
 
@@ -160,7 +157,7 @@ private:
       // we check the stack entries for violations
       // TODO: skip unnecessary checks (known violations), but this requires
       // a more complex way of storing the violations (worth it?)...
-      time_t deadline = INVALID_TIME;
+      time_t deadline;
       while (entry) {
         bool continue_checking =
             check_entry(*state, *entry, old_count, time, deadline);
@@ -168,9 +165,7 @@ private:
         if (continue_checking) {
           entry = entry->next;
         } else {
-          // TOdO: used for adaptive wait, probably not very useful and too
-          // complex
-          if (deadline != INVALID_TIME && deadline < min_deadline) {
+          if (deadline < min_deadline) {
             min_deadline = deadline;
           }
           break;
@@ -211,18 +206,19 @@ private:
                     // for this iteration
     }
 
-    if (deadline == INVALID_TIME) {
+    if (!entry.data.is_valid(deadline)) {
       return true; // was already checked by thread itself
     }
 
-    uint64_t delta;
-    if (is_exceeded(deadline, time, delta)) {
+    time_t delta;
+    if (is_violated(deadline, time, delta)) {
       // reset original, the memory exists (TODO: there is a ABA problem if
       // the entry is recycled, TODO: are the consequences harmful? (false
       // positive/negative/corruption?))
 
-      if (entry.data.deadline.compare_exchange_strong(
-              deadline, INVALID_TIME, std::memory_order_acq_rel,
+      // invalidate deadline (already checked)
+      if (entry.data.deadline_validator.compare_exchange_strong(
+              deadline, deadline + 1, std::memory_order_acq_rel,
               std::memory_order_relaxed)) {
         monitoring_thread_report_violation(state, entry.data, delta);
         return true;
