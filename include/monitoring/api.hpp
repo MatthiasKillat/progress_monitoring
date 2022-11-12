@@ -29,14 +29,13 @@ monitor &monitor_instance() {
 bool is_monitored() { return tl_state != nullptr; }
 
 void start_active_monitoring(time_unit_t interval) {
-  // TODO: config time
   monitor_instance().start_active_monitoring(interval);
 }
 
 void stop_active_monitoring() { monitor_instance().stop_active_monitoring(); }
 
 void start_this_thread_monitoring() {
-  // assert(!is_monitored());
+  assert(!is_monitored());
   tl_state = monitor_instance().register_this_thread();
 
   if (!tl_state) {
@@ -134,7 +133,7 @@ void confirm_progress(const source_location &location) {
   bool exceeded{false};
 #endif
 
-  if (deadline > 0) {
+  if (deadline != INVALID_TIME) {
     uint64_t delta;
     if (is_exceeded(deadline, confirm_time, delta)) {
       // deadline violation - should be rare
@@ -143,7 +142,8 @@ void confirm_progress(const source_location &location) {
 #endif
       self_report_violation(*tl_state, data, delta, location);
     }
-    data.deadline.store(0); // to avoid reporting of monitoring thread
+    // to avoid reporting of monitoring thread
+    data.deadline.store(INVALID_TIME);
   }
 #ifdef MONITORING_STATS
   else {

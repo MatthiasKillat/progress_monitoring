@@ -15,7 +15,7 @@ namespace monitor {
 struct checkpoint {
   source_location location;
   checkpoint_id_t id;
-  std::atomic<time_t> deadline{0};
+  std::atomic<time_t> deadline{INVALID_TIME};
   time_point_t start;
 };
 

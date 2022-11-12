@@ -24,11 +24,6 @@ constexpr uint32_t MAX_THREADS = 128;
 class thread_monitor {
   static constexpr uint32_t Capacity = MAX_THREADS;
 
-  // TODO: choose reasonable scaling range
-  static constexpr time_unit_t MAX_INTERVAL{
-      std::numeric_limits<int64_t>::max()};
-  static constexpr time_unit_t MIN_INTERVAL{10};
-
 public:
   thread_monitor() {
     for (index_t i = 0; i < Capacity; ++i) {
@@ -124,12 +119,9 @@ private:
 
   void deinit(thread_state &state) {
     state.tid = thread_id_t();
-    auto &s = state.deadlines;
-    stack_entry *entry = s.pop();
-    while (entry) {
-      // TODO: deallocate, need stack allocator for that
-      entry = s.pop();
-    }
+    // TODO: stack winks out, ok since thread local allocator will also go in
+    // normal use case otherwise we must return the entries to the allocator
+    state.deadlines.clear();
   }
 
   void prioritize(std::thread &thread) {
@@ -168,7 +160,7 @@ private:
       // we check the stack entries for violations
       // TODO: skip unnecessary checks (known violations), but this requires
       // a more complex way of storing the violations (worth it?)...
-      time_t deadline = 0;
+      time_t deadline = INVALID_TIME;
       while (entry) {
         bool continue_checking =
             check_entry(*state, *entry, old_count, time, deadline);
@@ -178,7 +170,7 @@ private:
         } else {
           // TOdO: used for adaptive wait, probably not very useful and too
           // complex
-          if (deadline > 0 && deadline < min_deadline) {
+          if (deadline != INVALID_TIME && deadline < min_deadline) {
             min_deadline = deadline;
           }
           break;
@@ -219,7 +211,7 @@ private:
                     // for this iteration
     }
 
-    if (deadline == 0) {
+    if (deadline == INVALID_TIME) {
       return true; // was already checked by thread itself
     }
 
@@ -230,7 +222,7 @@ private:
       // positive/negative/corruption?))
 
       if (entry.data.deadline.compare_exchange_strong(
-              deadline, 0, std::memory_order_acq_rel,
+              deadline, INVALID_TIME, std::memory_order_acq_rel,
               std::memory_order_relaxed)) {
         monitoring_thread_report_violation(state, entry.data, delta);
         return true;

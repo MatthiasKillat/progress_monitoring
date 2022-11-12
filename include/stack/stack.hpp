@@ -79,6 +79,8 @@ public:
     return false;
   }
 
+  void clear() { m_top.store(nullptr, std::memory_order_release); }
+
 private:
   // we want to read the stack from another thread (peek)
   // atomic needed if we sync with m_count?

@@ -18,4 +18,7 @@ using utime_t = uint64_t;
 
 using checkpoint_id_t = uint64_t;
 
+// must be fixed if we consider overflow mode at least, 0 is actually valid
+constexpr time_t INVALID_TIME{0};
+
 } // namespace monitor
