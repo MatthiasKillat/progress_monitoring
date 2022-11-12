@@ -14,9 +14,9 @@ using index_t = uint32_t;
 // weak/no encapsulation for simplicity and performance
 struct thread_state {
 
-  // nested functions require a lock-free checkpoint stack,
+  // nested functions require a lock-free stack,
   // suitable for one writer and one concurrent reader
-  stack checkpoint_stack;
+  deadline_stack deadlines;
   thread_id_t tid{0};
 
   index_t index;

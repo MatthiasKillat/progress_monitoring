@@ -8,5 +8,6 @@
 
 // #define DEADLINE_VIOLATION_OUTPUT_ON
 
-// will kill performance due to map access under mutex!
+// activation will kill performance due to map access under mutex!
+// statistic tracking must be refactored to work mostly local
 // #define MONITORING_STATS

@@ -14,10 +14,16 @@ void handler(monitor::checkpoint &) {
   g_deadline_violation = true;
 }
 
-#define CHECK_PROGRESS                                                         \
+#define EXPECT_DEADLINE_MET                                                    \
   do {                                                                         \
     CONFIRM_PROGRESS;                                                          \
     EXPECT_FALSE(g_deadline_violation);                                        \
+  } while (0)
+
+#define EXPECT_DEADLINE_VIOLATION                                              \
+  do {                                                                         \
+    CONFIRM_PROGRESS;                                                          \
+    EXPECT_TRUE(g_deadline_violation);                                         \
   } while (0)
 
 class MonitoringTest : public ::testing::Test {
@@ -46,7 +52,8 @@ TEST_F(MonitoringTest, probably_in_time) {
 
   std::this_thread::sleep_for(99ms);
 
-  CHECK_PROGRESS;
+  // may fail due to scheduling/sleep precision
+  EXPECT_DEADLINE_MET;
 }
 
 TEST_F(MonitoringTest, deadline_violation) {
@@ -57,5 +64,6 @@ TEST_F(MonitoringTest, deadline_violation) {
 
   std::this_thread::sleep_for(101ms);
 
-  CHECK_PROGRESS;
+  // should always succeed, i.e. violate the deadline
+  EXPECT_DEADLINE_VIOLATION;
 }

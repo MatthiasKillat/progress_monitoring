@@ -4,15 +4,13 @@
 #include <stdint.h>
 
 #include "monitoring/source_location.hpp"
-#include "monitoring/time.hpp"
+#include "types.hpp"
 
 namespace monitor {
 
 // must be memcpyable
 // we deliberately avoid generics and encapsulation here and strive for
 // efficiency (it is not exposed to the user)
-
-using checkpoint_id_t = uint64_t;
 
 struct checkpoint {
   source_location location;

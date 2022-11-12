@@ -13,66 +13,67 @@
 namespace monitor {
 
 // stack structure is only modified in one context (push/pop)
-class stack {
+// but read in others (could be many readers)
+// more precisely the other contexts may also modify data on the stack, but not
+// call push/pop
+class deadline_stack {
 public:
-  stack() : m_top{nullptr} {}
+  deadline_stack() : m_top{nullptr} {}
 
-  bool empty() { return m_top == nullptr; }
+  bool empty() { return top() == nullptr; }
 
   void push(stack_entry &entry) {
-    entry.count = m_count.fetch_add(1, std::memory_order_acq_rel);
+    entry.count = m_count.fetch_add(1, std::memory_order_relaxed);
 
-    if (!m_top) {
-      entry.next = nullptr;
-      m_top = &entry;
-      return;
-    }
+    // ensure that count is increased before stack is changed
+    std::atomic_thread_fence(std::memory_order_release);
 
-    entry.next = m_top;
-    m_top = &entry;
+    // we only change top in one thread and hence do not have to snychronize
+    auto p = m_top.load(std::memory_order_relaxed);
+
+    // if (!p) {
+    //   entry.next = nullptr;
+    //   m_top.store(&entry, std::memory_order_release);
+    //   return;
+    // }
+
+    entry.next = p;
+    m_top.store(&entry, std::memory_order_release);
   }
 
   stack_entry *pop() {
-    auto p = m_top.load();
+    auto p = m_top.load(std::memory_order_relaxed);
     if (!p) {
       return nullptr;
     }
-    m_top.store(p->next);
+    m_top.store(p->next, std::memory_order_release);
     return p;
   }
 
-  stack_entry *top() { return m_top.load(); }
+  stack_entry *top() { return m_top.load(std::memory_order_acquire); }
 
-  // TODO: synchronization
-  uint64_t count() { return m_count.load(); }
-
-  void print() {
-    auto p = m_top.load();
-    while (p) {
-      std::cout << p->count << " ";
-      p = p->next;
-    }
-    std::cout << "eos" << std::endl;
-  }
+  uint64_t count() { return m_count.load(std::memory_order_relaxed); }
 
   bool peek(stack_entry &result) {
 
-    // TODO: read only payload data
-    stack_entry *t = m_top.load();
-    while (t) {
-      // TODO: enforce order with fences
-      auto oldCount = m_count.load(std::memory_order_acquire);
+    stack_entry *p = m_top.load();
+    while (p) {
+      auto oldCount = count();
+
+      // ensure that count is read before the data is copied
+      std::atomic_thread_fence(std::memory_order_acquire);
 
       // m_top may change but memcpy will succeed (potentially with garbage)
-      std::memcpy(&result, &t, sizeof(stack_entry));
+      std::memcpy(&result, &p, sizeof(stack_entry));
 
-      // todo: atomic
-      // must happen after memcpy
-      if (m_count == oldCount) {
+      // potentially redundant but issues no instruction on x86
+      std::atomic_thread_fence(std::memory_order_release);
+
+      if (count() == oldCount) {
         return true;
       }
       // m_top changed, memcpy may have been invalid, try again
-      t = m_top.load();
+      p = m_top.load();
     }
 
     return false;

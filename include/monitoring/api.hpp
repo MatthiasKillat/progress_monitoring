@@ -80,7 +80,7 @@ void expect_progress_in(time_unit_t timeout, const source_location &location) {
   data.location = location;
   data.id = 0;
   data.deadline = to_deadline(timeout);
-  tl_state->checkpoint_stack.push(*entry);
+  tl_state->deadlines.push(*entry);
 
   // needed if we use some kind of adaptive deadline scheme
   // this is too costly to be worth it
@@ -111,7 +111,7 @@ void expect_progress_in(time_unit_t timeout, checkpoint_id_t check_id,
   data.start = clock_t::now();
   // data.start = unow();
 #endif
-  tl_state->checkpoint_stack.push(*entry);
+  tl_state->deadlines.push(*entry);
 
   // this is too costly to be worth it
   // monitor_instance().wake_up();
@@ -123,7 +123,7 @@ void confirm_progress(const source_location &location) {
   // auto now = unow();
   auto confirm_time = to_time_unit(now);
 
-  auto entry = tl_state->checkpoint_stack.pop();
+  auto entry = tl_state->deadlines.pop();
   assert(entry != nullptr);
 
   auto &data = entry->data;

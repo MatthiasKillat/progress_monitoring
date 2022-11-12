@@ -124,7 +124,7 @@ private:
 
   void deinit(thread_state &state) {
     state.tid = thread_id_t();
-    auto &s = state.checkpoint_stack;
+    auto &s = state.deadlines;
     stack_entry *entry = s.pop();
     while (entry) {
       // TODO: deallocate, need stack allocator for that
@@ -158,7 +158,7 @@ private:
 
     // TODO: optimize iteration structure
     for (auto state : m_registered) {
-      auto &stack = state->checkpoint_stack;
+      auto &stack = state->deadlines;
 
       // TODO: analyze whether stronger fences are needed!
       auto old_count = stack.count();
@@ -211,7 +211,7 @@ private:
   // factored out, returns whether to continue checking
   bool check_entry(thread_state &state, stack_entry &entry, uint64_t old_count,
                    time_t time, time_t &deadline) {
-    auto &stack = state.checkpoint_stack;
+    auto &stack = state.deadlines;
     deadline = entry.data.deadline.load(std::memory_order_relaxed);
 
     if (old_count != stack.count()) {

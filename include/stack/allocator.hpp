@@ -48,6 +48,7 @@ public:
   void deallocate(stack_entry *entry) { m_entries.push(entry); }
 
 private:
+  // TODO: these can become non-allocatimng containers later
   std::list<batch_t *> m_batches;
   std::queue<stack_entry *> m_entries;
 
