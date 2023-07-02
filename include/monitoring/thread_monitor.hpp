@@ -1,6 +1,7 @@
 #pragma once
 
 #include "report.hpp"
+#include "stack/entry.hpp"
 #include "thread_state.hpp"
 #include "time.hpp"
 
@@ -28,6 +29,11 @@ public:
       auto &state = get_state(i);
       state.index = i;
     }
+
+    // TODO: make configurable etc.
+    m_handler = [](checkpoint &) {
+      std::cout << "GLOBAL HANDLER" << std::endl;
+    };
   }
 
   ~thread_monitor() {}
@@ -87,7 +93,11 @@ public:
     m_condvar.notify_one();
   }
 
-  // TODO: maybe wake up
+  // TODO: concurrency assumptions
+  void invoke_handler(checkpoint &check) {
+    if (m_handler)
+      m_handler(check);
+  }
 
 private:
   // weakly contended, only for registration and deregistration
@@ -110,9 +120,14 @@ private:
   std::condition_variable m_condvar;
   std::atomic_bool m_wakeup{false};
 
+  std::function<void(checkpoint &)> m_handler;
+
   thread_state &get_state(index_t index) { return m_states[index]; }
 
-  void init(thread_state &state) { state.tid = std::this_thread::get_id(); }
+  void init(thread_state &state) {
+    state.tid = std::this_thread::get_id();
+    state.monitor = this;
+  }
 
   void deinit(thread_state &state) {
     state.tid = thread_id_t();
@@ -221,6 +236,7 @@ private:
               deadline, deadline + 1, std::memory_order_acq_rel,
               std::memory_order_relaxed)) {
         monitoring_thread_report_violation(state, entry.data, delta);
+        invoke_handler(entry.data);
         return true;
       }
     }

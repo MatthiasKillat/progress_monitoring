@@ -11,6 +11,8 @@ namespace monitor {
 using thread_id_t = std::thread::id;
 using index_t = uint32_t;
 
+class thread_monitor;
+
 // weak/no encapsulation for simplicity and performance
 struct thread_state {
 
@@ -20,6 +22,8 @@ struct thread_state {
   thread_id_t tid{0};
 
   index_t index;
+
+  thread_monitor *monitor{nullptr};
 
   thread_state() = default;
   thread_state(const thread_state &other) = delete;

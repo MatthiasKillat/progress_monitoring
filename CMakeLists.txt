@@ -65,6 +65,15 @@ target_link_libraries(
   GTest::gtest_main
 )
 
+add_executable(
+  test_main
+  ./test/atomic_state.cpp
+)
+target_link_libraries(
+  test_main
+  GTest::gtest_main
+)
+
 include(GoogleTest)
 gtest_discover_tests(test_monitoring)
 

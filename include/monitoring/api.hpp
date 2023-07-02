@@ -145,6 +145,8 @@ void confirm_progress(const source_location &location) {
       exceeded = true;
 #endif
       self_report_violation(*tl_state, data, delta, location);
+      // TODO: conditional
+      monitor_instance().invoke_handler(data);
     }
     // to avoid reporting of monitoring thread, note that the monitoring thread
     // increments the other variable
