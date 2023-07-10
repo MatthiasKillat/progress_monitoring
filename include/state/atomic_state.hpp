@@ -9,12 +9,14 @@ namespace traits {
 
 // std::is_trivially_copyable is not the right trait because it precludes
 // T to have e.g. dtors, therefore use a opt-in approach with a custom trait
-template <typename T> struct is_memcopyable : public std::false_type {};
+template <typename T>
+struct is_memcopyable : public std::false_type {};
 
 } // namespace traits
 
 /// @brief single writer atomic state
-template <typename T> class sw_atomic_state {
+template <typename T>
+class sw_atomic_state {
 private:
   static constexpr size_t SIZE = sizeof(T);
   static constexpr size_t ALIGN = alignof(T);
@@ -27,7 +29,8 @@ public:
   using storage_t = typename std::aligned_storage<SIZE, ALIGN>::type;
   using count_t = uint64_t;
 
-  template <typename... Args> sw_atomic_state(Args &&...args);
+  template <typename... Args>
+  sw_atomic_state(Args &&...args);
 
   ~sw_atomic_state();
 
@@ -38,7 +41,8 @@ public:
 
   /// @brief set the current value (in-place construction with args)
   /// @note caller must ensure there are no concurrent writes!
-  template <typename... Args> void set(Args &&...args);
+  template <typename... Args>
+  void set(Args &&...args);
 
   /// @brief access the current value
   /// @note caller must ensure there are no concurrent writes!
@@ -114,7 +118,8 @@ sw_atomic_state<T>::sw_atomic_state(Args &&...args) {
   new (p) T(std::forward<Args>(args)...);
 }
 
-template <typename T> sw_atomic_state<T>::~sw_atomic_state() {
+template <typename T>
+sw_atomic_state<T>::~sw_atomic_state() {
   auto p = current_ptr();
   p->~T();
 }
@@ -130,7 +135,14 @@ void sw_atomic_state<T>::set(Args &&...args) {
   // the buffer may change and the content destroyed and possibly constructed
   // again while a potential reader performs a memcpy (this will never work
   // with a copy ctor without ownership transfer and exclusive write)
-  m_count.fetch_add(1, std::memory_order_acq_rel);
+  auto prev = m_count.fetch_add(1, std::memory_order_acq_rel);
+
+  // self repair after restart (shared memory) or wraparound (may not be an
+  // issue) - we know that there is no other writer that changes the counter!
+  if (prev % 2 == 0) {
+    // needs to be odd
+    m_count.fetch_add(1, std::memory_order_acq_rel);
+  }
 
   // count is odd
 
@@ -160,7 +172,10 @@ void sw_atomic_state<T>::set(Args &&...args) {
   // incrementing the count
 }
 
-template <typename T> T &sw_atomic_state<T>::get() { return *current_ptr(); }
+template <typename T>
+T &sw_atomic_state<T>::get() {
+  return *current_ptr();
+}
 
 template <typename T>
 bool sw_atomic_state<T>::try_load(sw_atomic_state<T>::storage_t *dest) {
@@ -189,7 +204,8 @@ void sw_atomic_state<T>::load(sw_atomic_state<T>::storage_t *dest) {
     ;
 }
 
-template <typename T> T sw_atomic_state<T>::load() {
+template <typename T>
+T sw_atomic_state<T>::load() {
   storage_t dest;
   load(&dest);
   return *reinterpret_cast<T *>(&dest);
@@ -200,8 +216,12 @@ typename sw_atomic_state<T>::count_t sw_atomic_state<T>::count() {
   return m_count.load(std::memory_order_relaxed);
 }
 
-template <typename T> bool sw_atomic_state<T>::has_changed(count_t count) {
+template <typename T>
+bool sw_atomic_state<T>::has_changed(count_t count) {
   return count != sync_count();
 }
 
-template <typename T> void sw_atomic_state<T>::reset() { m_count = 0; }
+template <typename T>
+void sw_atomic_state<T>::reset() {
+  m_count = 0;
+}

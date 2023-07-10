@@ -68,6 +68,7 @@ target_link_libraries(
 add_executable(
   test_main
   ./test/atomic_state.cpp
+  ./test/wait_notify.cpp
 )
 target_link_libraries(
   test_main
@@ -98,5 +99,11 @@ target_link_libraries(
   benchmark_general
   benchmark::benchmark
 )
+
+add_executable(shm
+  examples/shm_main.cpp
+)
+
+#target_link_libraries(shm PRIVATE Threads::Threads)
 
 
